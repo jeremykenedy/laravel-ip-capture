@@ -2,6 +2,11 @@
 
 A Laravel package to automatically capture and track IP addresses on Eloquent model actions such as signup, login, update, and deletion.
 
+[![Total Downloads](https://poser.pugx.org/jeremykenedy/laravel-ip-capture/d/total.svg)](https://packagist.org/packages/jeremykenedy/laravel-ip-capture)
+[![Latest Stable Version](https://poser.pugx.org/jeremykenedy/laravel-ip-capture/v/stable.svg)](https://packagist.org/packages/jeremykenedy/laravel-ip-capture)
+[![StyleCI](https://github.styleci.io/repos/1194807588/shield?branch=main)](https://github.styleci.io/repos/1194807588?branch=main)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 #### Table of Contents
 - [Features](#features)
 - [Installation](#installation)
