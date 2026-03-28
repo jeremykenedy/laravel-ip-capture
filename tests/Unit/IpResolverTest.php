@@ -1,8 +1,8 @@
 <?php
 
+use Illuminate\Http\Request;
 use Jeremykenedy\LaravelIpCapture\Contracts\IpResolverInterface;
 use Jeremykenedy\LaravelIpCapture\Services\IpResolver;
-use Illuminate\Http\Request;
 
 it('resolves the ip resolver from the container', function () {
     $resolver = app(IpResolverInterface::class);
@@ -56,7 +56,7 @@ it('hashes the ip when hash is enabled', function () {
 it('reads cloudflare connecting ip header', function () {
     $request = Request::create('/test', 'GET', [], [], [], [
         'HTTP_CF_CONNECTING_IP' => '203.0.113.50',
-        'REMOTE_ADDR' => '127.0.0.1',
+        'REMOTE_ADDR'           => '127.0.0.1',
     ]);
 
     config(['ip-capture.trust_proxies' => false]);
@@ -70,7 +70,7 @@ it('reads cloudflare connecting ip header', function () {
 it('reads x-forwarded-for header with multiple ips', function () {
     $request = Request::create('/test', 'GET', [], [], [], [
         'HTTP_X_FORWARDED_FOR' => '203.0.113.50, 70.41.3.18, 150.172.238.178',
-        'REMOTE_ADDR' => '127.0.0.1',
+        'REMOTE_ADDR'          => '127.0.0.1',
     ]);
 
     config(['ip-capture.trust_proxies' => false]);

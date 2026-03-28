@@ -11,7 +11,8 @@ class IpResolver implements IpResolverInterface
 {
     public function __construct(
         protected Request $request,
-    ) {}
+    ) {
+    }
 
     public function getClientIp(): string
     {
