@@ -12,22 +12,22 @@ class IpCaptureServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->mergeConfigFrom(__DIR__ . '/../../config/ip-capture.php', 'ip-capture');
+        $this->mergeConfigFrom(__DIR__.'/../../config/ip-capture.php', 'ip-capture');
 
         $this->app->bind(IpResolverInterface::class, IpResolver::class);
     }
 
     public function boot(): void
     {
-        $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
+        $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
 
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__ . '/../../config/ip-capture.php' => config_path('ip-capture.php'),
+                __DIR__.'/../../config/ip-capture.php' => config_path('ip-capture.php'),
             ], 'ip-capture-config');
 
             $this->publishes([
-                __DIR__ . '/../../database/migrations/' => database_path('migrations'),
+                __DIR__.'/../../database/migrations/' => database_path('migrations'),
             ], 'ip-capture-migrations');
         }
     }

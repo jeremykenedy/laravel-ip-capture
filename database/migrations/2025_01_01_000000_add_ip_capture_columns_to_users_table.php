@@ -4,18 +4,17 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class() extends Migration {
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
             $columns = config('ip-capture.columns', [
-                'signup_ip_address' => true,
+                'signup_ip_address'              => true,
                 'signup_confirmation_ip_address' => true,
-                'signup_sm_ip_address' => true,
-                'admin_ip_address' => true,
-                'updated_ip_address' => true,
-                'deleted_ip_address' => true,
+                'signup_sm_ip_address'           => true,
+                'admin_ip_address'               => true,
+                'updated_ip_address'             => true,
+                'deleted_ip_address'             => true,
             ]);
 
             $afterColumn = 'password';
@@ -30,7 +29,7 @@ return new class extends Migration
             ];
 
             foreach ($orderedColumns as $col) {
-                if (($columns[$col] ?? false) && ! Schema::hasColumn('users', $col)) {
+                if (($columns[$col] ?? false) && !Schema::hasColumn('users', $col)) {
                     $table->string($col, 64)->nullable()->after($afterColumn);
                 }
                 if (Schema::hasColumn('users', $col)) {
