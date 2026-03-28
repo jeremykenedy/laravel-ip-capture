@@ -1,0 +1,49 @@
+{
+    "name": "jeremykenedy/laravel-ip-capture",
+    "description": "A Laravel package to automatically capture and track IP addresses on Eloquent model actions such as signup, login, update, and deletion.",
+    "keywords": ["laravel", "ip", "capture", "tracking", "audit", "security"],
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Jeremy Kenedy",
+            "email": "jeremykenedy@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^8.2|^8.3",
+        "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/database": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/http": "^10.0|^11.0|^12.0|^13.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.0|^9.0|^10.0",
+        "pestphp/pest": "^2.0|^3.0",
+        "pestphp/pest-plugin-laravel": "^2.0|^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Jeremykenedy\\LaravelIpCapture\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Jeremykenedy\\LaravelIpCapture\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Jeremykenedy\\LaravelIpCapture\\Providers\\IpCaptureServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
