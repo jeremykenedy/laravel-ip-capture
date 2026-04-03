@@ -80,3 +80,54 @@ it('reads x-forwarded-for header with multiple ips', function () {
 
     expect($ip)->toBe('203.0.113.50');
 });
+
+it('returns null ip when all headers are missing', function () {
+    $request = Request::create('/test', 'GET');
+
+    config(['ip-capture.trust_proxies' => false]);
+
+    $resolver = new IpResolver($request);
+    $ip = $resolver->getClientIp();
+
+    expect($ip)->toBeString();
+});
+
+it('hashes with a custom algorithm', function () {
+    config(['ip-capture.hash' => true, 'ip-capture.hash_algo' => 'md5']);
+
+    $request = Request::create('/test', 'GET', [], [], [], [
+        'REMOTE_ADDR' => '10.0.0.1',
+    ]);
+
+    $resolver = new IpResolver($request);
+    $ip = $resolver->getClientIp();
+
+    expect($ip)->toBe(hash('md5', '10.0.0.1'));
+});
+
+it('uses custom null ip from config', function () {
+    config([
+        'ip-capture.null_ip' => '255.255.255.255',
+        'ip-capture.trust_proxies' => false,
+    ]);
+
+    $request = Request::create('/test', 'GET');
+
+    $resolver = new IpResolver($request);
+    $ip = $resolver->getClientIp();
+
+    expect($ip)->toBeString();
+});
+
+it('prefers trusted proxy ip when enabled', function () {
+    config(['ip-capture.trust_proxies' => true]);
+
+    $request = Request::create('/test', 'GET', [], [], [], [
+        'REMOTE_ADDR' => '192.168.1.50',
+    ]);
+
+    $resolver = new IpResolver($request);
+    $ip = $resolver->getClientIp();
+
+    expect($ip)->toBe('192.168.1.50');
+});

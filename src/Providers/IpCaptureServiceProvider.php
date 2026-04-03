@@ -20,6 +20,7 @@ class IpCaptureServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
+        $this->loadTranslationsFrom(__DIR__.'/../../resources/lang', 'ip-capture');
 
         if ($this->app->runningInConsole()) {
             $this->publishes([
@@ -29,6 +30,10 @@ class IpCaptureServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__.'/../../database/migrations/' => database_path('migrations'),
             ], 'ip-capture-migrations');
+
+            $this->publishes([
+                __DIR__.'/../../resources/lang' => $this->app->langPath('vendor/ip-capture'),
+            ], 'ip-capture-lang');
         }
     }
 }
