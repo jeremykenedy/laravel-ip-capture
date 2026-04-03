@@ -107,7 +107,7 @@ it('hashes with a custom algorithm', function () {
 
 it('uses custom null ip from config', function () {
     config([
-        'ip-capture.null_ip' => '255.255.255.255',
+        'ip-capture.null_ip'       => '255.255.255.255',
         'ip-capture.trust_proxies' => false,
     ]);
 
