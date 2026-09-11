@@ -44,11 +44,18 @@ it('falls back to blade for an unknown frontend', function () {
 });
 
 it('inherits the framework from laravel-ui-kit when its own key is unset', function () {
-    config(['ip-capture.css_framework' => null, 'ui-kit.css_framework' => 'bootstrap5']);
-    config(['ip-capture.frontend' => null, 'ui-kit.frontend' => 'livewire']);
+    config(['ui-kit.css_framework' => 'bootstrap5', 'ui-kit.frontend' => 'livewire']);
 
-    expect(IpCapture::cssFramework())->toBe('bootstrap5')
+    // The shipped config leaves the package keys unset, so this is what a
+    // laravel-ui-kit application sees without touching ip-capture config.
+    expect(config('ip-capture.css_framework'))->toBeNull()
+        ->and(IpCapture::cssFramework())->toBe('bootstrap5')
         ->and(IpCapture::frontend())->toBe('livewire');
+});
+
+it('falls back to tailwind and blade with no ui-kit installed', function () {
+    expect(IpCapture::cssFramework())->toBe('tailwind')
+        ->and(IpCapture::frontend())->toBe('blade');
 });
 
 it('validates the shipped framework lists', function () {

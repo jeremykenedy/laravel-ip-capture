@@ -179,7 +179,10 @@ return [
     |
     */
 
-    'css_framework' => env('IP_CAPTURE_CSS', env('UI_KIT_CSS', 'tailwind')),
+    // Left unset when neither variable is present, so the accessor can fall
+    // back to a laravel-ui-kit installation configured in config rather than
+    // in the environment.
+    'css_framework' => env('IP_CAPTURE_CSS', env('UI_KIT_CSS')),
 
     /*
     |--------------------------------------------------------------------------
@@ -191,7 +194,7 @@ return [
     |
     */
 
-    'frontend' => env('IP_CAPTURE_FRONTEND', env('UI_KIT_FRONTEND', 'blade')),
+    'frontend' => env('IP_CAPTURE_FRONTEND', env('UI_KIT_FRONTEND')),
 
     /*
     |--------------------------------------------------------------------------

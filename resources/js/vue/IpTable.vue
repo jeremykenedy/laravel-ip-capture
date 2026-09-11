@@ -30,7 +30,7 @@ const themes = {
         title: 'h6 mb-0',
         table: 'table table-sm mb-0 align-middle',
         th: 'text-secondary text-uppercase small',
-        label: 'fw-normal text-body-secondary',
+        label: 'fw-normal text-muted',
         cell: '',
         code: 'font-monospace',
         empty: 'text-secondary',

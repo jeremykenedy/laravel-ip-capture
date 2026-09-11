@@ -1,5 +1,7 @@
 <?php
 
+use Jeremykenedy\LaravelIpCapture\Support\IpCapture;
+
 it('has default config values', function () {
     expect(config('ip-capture.enabled'))->toBeTrue();
     expect(config('ip-capture.null_ip'))->toBe('0.0.0.0');
@@ -68,8 +70,10 @@ it('ships the proxy header list in priority order', function () {
     ]);
 });
 
-it('ships tailwind and blade as the frontend defaults', function () {
-    expect(config('ip-capture.css_framework'))->toBe('tailwind');
-    expect(config('ip-capture.frontend'))->toBe('blade');
+it('ships tailwind and blade as the effective frontend defaults', function () {
+    // The keys themselves ship unset so a laravel-ui-kit setting can be
+    // inherited. The accessors are what the package reads.
+    expect(IpCapture::cssFramework())->toBe('tailwind');
+    expect(IpCapture::frontend())->toBe('blade');
     expect(config('ip-capture.views.enabled'))->toBeTrue();
 });

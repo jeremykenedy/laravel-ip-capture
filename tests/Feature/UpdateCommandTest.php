@@ -89,3 +89,23 @@ it('uses the configured frameworks when run without flags or prompts', function 
     expect(config('ip-capture.css_framework'))->toBe('bootstrap4')
         ->and(config('ip-capture.frontend'))->toBe('svelte');
 });
+
+it('leaves a published livewire component as the application edited it', function () {
+    $this->artisan('ip-capture:update', ['--frontend' => 'livewire'])->assertSuccessful();
+
+    File::put(app_path('Livewire/IpTable.php'), '<?php // edited by the application');
+
+    $this->artisan('ip-capture:update', ['--frontend' => 'livewire'])->assertSuccessful();
+
+    expect(File::get(app_path('Livewire/IpTable.php')))->toBe('<?php // edited by the application');
+});
+
+it('leaves a published javascript component as the application edited it', function () {
+    $this->artisan('ip-capture:update', ['--frontend' => 'vue'])->assertSuccessful();
+
+    File::put(resource_path('js/vendor/ip-capture/vue/IpTable.vue'), '// edited by the application');
+
+    $this->artisan('ip-capture:update', ['--frontend' => 'vue'])->assertSuccessful();
+
+    expect(File::get(resource_path('js/vendor/ip-capture/vue/IpTable.vue')))->toBe('// edited by the application');
+});

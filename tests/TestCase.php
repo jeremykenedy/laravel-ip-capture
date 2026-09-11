@@ -103,6 +103,10 @@ abstract class TestCase extends OrchestraTestCase
         config(['ip-capture.css_framework' => $framework]);
 
         View::replaceNamespace(IpCapture::VIEW_NAMESPACE, IpCapture::viewPaths($framework));
+
+        // The finder caches a resolved path by view name, so without this a
+        // second switch in one process keeps rendering the first framework.
+        View::flushFinderCache();
     }
 
     /**

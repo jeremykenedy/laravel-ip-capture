@@ -46,11 +46,19 @@ class SwitchCommand extends Command
         if ($css) {
             $this->setCssFramework($css);
             info("IP Capture CSS framework switched to: {$css}");
+
+            // A view published earlier sits in front of the package views
+            // whatever the framework is set to, so it has to be replaced.
+            info('Republish the views: php artisan vendor:publish --tag=ip-capture-views --force');
         }
 
         if ($frontend) {
             $this->setFrontendFramework($frontend);
             info("IP Capture frontend switched to: {$frontend}");
+
+            foreach ($this->publishHintsFor($frontend) as $hint) {
+                info($hint);
+            }
         }
 
         info('Run: php artisan view:clear');

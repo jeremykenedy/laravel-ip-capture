@@ -1,4 +1,4 @@
-<span {{ $attributes->merge(['class' => 'badge rounded-pill '.($captured() ? 'text-success-emphasis bg-success-subtle' : 'text-secondary bg-secondary-subtle')]) }}>
+<span {{ $attributes->merge(['class' => 'badge rounded-pill '.($captured() ? 'bg-success' : 'bg-secondary')]) }}>
     @if ($label)
         <span class="fw-normal opacity-75">{{ $label }}</span>
     @endif

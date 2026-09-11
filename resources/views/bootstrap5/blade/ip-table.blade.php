@@ -21,7 +21,7 @@
             <tbody>
                 @forelse ($rows() as $row)
                     <tr data-column="{{ $row['column'] }}">
-                        <th scope="row" class="fw-normal text-body-secondary">{{ $row['label'] }}</th>
+                        <th scope="row" class="fw-normal text-muted">{{ $row['label'] }}</th>
                         <td>
                             @if ($row['captured'])
                                 <code>{{ $row['value'] }}</code>

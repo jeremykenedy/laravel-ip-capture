@@ -70,3 +70,27 @@ it('reminds the reader to clear the compiled views', function () {
         ->expectsOutputToContain('php artisan view:clear')
         ->assertSuccessful();
 });
+
+it('names the publish command when switching to a javascript frontend', function () {
+    $this->artisan('ip-capture:switch', ['--frontend' => 'vue'])
+        ->expectsOutputToContain('vendor:publish --tag=ip-capture-js')
+        ->assertSuccessful();
+});
+
+it('names the publish command when switching to livewire', function () {
+    $this->artisan('ip-capture:switch', ['--frontend' => 'livewire'])
+        ->expectsOutputToContain('vendor:publish --tag=ip-capture-livewire')
+        ->assertSuccessful();
+});
+
+it('tells the reader to republish views when switching css framework', function () {
+    $this->artisan('ip-capture:switch', ['--css' => 'bootstrap5'])
+        ->expectsOutputToContain('vendor:publish --tag=ip-capture-views --force')
+        ->assertSuccessful();
+});
+
+it('names no publish command when switching to blade', function () {
+    $this->artisan('ip-capture:switch', ['--frontend' => 'blade'])
+        ->doesntExpectOutputToContain('ip-capture-js')
+        ->assertSuccessful();
+});

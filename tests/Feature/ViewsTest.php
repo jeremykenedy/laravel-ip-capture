@@ -89,7 +89,7 @@ it('renders the markup of the active css framework', function (string $framework
     expect($html)->toContain($needle);
 })->with([
     ['tailwind', 'rounded-xl border border-gray-200'],
-    ['bootstrap5', 'text-body-secondary'],
+    ['bootstrap5', 'fw-normal text-muted'],
     ['bootstrap4', 'font-weight-normal'],
 ]);
 
@@ -109,4 +109,15 @@ it('passes extra attributes through to the rendered element', function () {
     $html = Blade::render('<x-ip-capture::ip-table id="audit" :columns="[]" />');
 
     expect($html)->toContain('id="audit"');
+});
+
+it('renders the new framework when the framework changes twice over', function () {
+    $this->useCssFramework('bootstrap5');
+    $first = Blade::render('<x-ip-capture::ip-table :columns="[\'signup_ip_address\' => \'203.0.113.10\']" />');
+
+    $this->useCssFramework('bootstrap4');
+    $second = Blade::render('<x-ip-capture::ip-table :columns="[\'signup_ip_address\' => \'203.0.113.10\']" />');
+
+    expect($first)->toContain('fw-normal text-muted')->not->toContain('font-weight-normal')
+        ->and($second)->toContain('font-weight-normal')->not->toContain('fw-normal');
 });

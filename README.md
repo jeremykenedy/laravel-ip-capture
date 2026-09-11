@@ -57,6 +57,8 @@ One CSS framework and one frontend are active at a time, selected in config or w
 | **Bootstrap 5** | Yes | Yes | Yes | Yes | Yes |
 | **Bootstrap 4** | Yes | Yes | Yes | Yes | Yes |
 
+The Bootstrap 5 markup sticks to utilities available since 5.0, so it does not need 5.3.
+
 ## Requirements
 
 | Dependency | Version |
@@ -168,15 +170,19 @@ import IpTable from '../js/vendor/ip-capture/react/IpTable'
 Every JavaScript component takes the same `rows` array, which you can build from the model:
 
 ```php
-$rows = collect($user->getIpColumns())
-    ->map(fn (?string $value, string $column) => [
+use Jeremykenedy\LaravelIpCapture\Support\IpCapture;
+
+$rows = collect(IpCapture::enabledColumns())
+    ->map(fn (string $column) => [
         'column'   => $column,
-        'label'    => \Jeremykenedy\LaravelIpCapture\Support\IpCapture::columnLabel($column),
-        'value'    => $value,
-        'captured' => filled($value),
+        'label'    => IpCapture::columnLabel($column),
+        'value'    => filled($user->{$column}) ? $user->{$column} : IpCapture::emptyLabel(),
+        'captured' => filled($user->{$column}),
     ])
-    ->values();
+    ->all();
 ```
+
+`all()` matters: the components expect an array, and a `Collection` serialises to an object. Each row carries a `value` either way, because the components render it in both branches.
 
 ## Features
 
@@ -271,6 +277,11 @@ $user->setIpColumn('reset_ip_address');
 ```
 
 The bundled migration creates every enabled column, shipped ones first and anything you added after them.
+
+Two limits are worth knowing, both from the migration reading configuration rather than recording what it did:
+
+- Rollback drops the six shipped columns it finds on the table, whether or not this migration created them. A column another package had already created is dropped too. Rollback does not touch columns you added through config.
+- `table` and `after_column` have to stay put once the migration has run. Changing `table` afterwards means rollback inspects the new table and leaves the columns on the old one.
 
 ## Privacy
 

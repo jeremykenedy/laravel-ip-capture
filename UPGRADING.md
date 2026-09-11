@@ -27,7 +27,14 @@ drop the columns when it finds it, so a rollback cannot delete data that an
 earlier version of the package created.
 
 If you published the migration into your own `database/migrations`, your copy is
-untouched and keeps its own name.
+untouched and keeps its own name. Both files then exist, and only whichever
+runs first creates the columns, because both guard every column with
+`Schema::hasColumn`. Delete the published copy if you would rather have one.
+
+Rollback drops the six shipped columns it finds on the table, whether or not
+this migration created them, and `table` has to stay put once the migration has
+run. Both follow from the migration reading configuration instead of recording
+what it did, and both are documented in the README.
 
 ### New config keys
 

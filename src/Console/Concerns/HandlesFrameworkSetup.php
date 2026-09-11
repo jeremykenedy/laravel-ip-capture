@@ -59,6 +59,9 @@ trait HandlesFrameworkSetup
         $path = base_path('.env');
 
         if (!file_exists($path)) {
+            $this->warn("  No .env file, so {$key}={$value} was not persisted.");
+            $this->line('  Set it in config/ip-capture.php instead.');
+
             return;
         }
 
@@ -103,17 +106,47 @@ trait HandlesFrameworkSetup
         ]);
     }
 
-    protected function publishFrontendFor(string $frontend): void
+    /**
+     * What a switch leaves for the reader to publish, since it changes
+     * configuration without touching files.
+     *
+     * @return list<string>
+     */
+    protected function publishHintsFor(string $frontend): array
     {
         if (in_array($frontend, IpCapture::JS_FRONTENDS, true)) {
-            $this->callSilently('vendor:publish', ['--tag' => 'ip-capture-js', '--force' => true]);
-
-            return;
+            return ['Publish the components: php artisan vendor:publish --tag=ip-capture-js'];
         }
 
         if ($frontend === 'livewire') {
-            $this->callSilently('vendor:publish', ['--tag' => 'ip-capture-livewire', '--force' => true]);
+            return ['Publish the component: php artisan vendor:publish --tag=ip-capture-livewire'];
         }
+
+        return [];
+    }
+
+    /**
+     * Publish the files a frontend needs.
+     *
+     * Only a reinstall overwrites, because these are files an application is
+     * expected to edit once they are published.
+     */
+    protected function publishFrontendFor(string $frontend, bool $force = false): void
+    {
+        $tag = match (true) {
+            in_array($frontend, IpCapture::JS_FRONTENDS, true) => 'ip-capture-js',
+            $frontend === 'livewire'                           => 'ip-capture-livewire',
+            default                                            => null,
+        };
+
+        if ($tag === null) {
+            return;
+        }
+
+        $this->callSilently('vendor:publish', array_filter([
+            '--tag'   => $tag,
+            '--force' => $force,
+        ]));
     }
 
     protected function clearCaches(): void

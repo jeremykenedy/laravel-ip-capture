@@ -28,7 +28,7 @@ it('publishes the views of the framework it just selected', function (string $cs
         ->and(File::get($published))->toContain($needle);
 })->with([
     ['tailwind', 'rounded-xl'],
-    ['bootstrap5', 'text-body-secondary'],
+    ['bootstrap5', 'fw-normal text-muted'],
     ['bootstrap4', 'font-weight-normal'],
 ]);
 

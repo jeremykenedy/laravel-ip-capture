@@ -63,7 +63,7 @@ class InstallCommand extends Command
         $this->callSilently('vendor:publish', ['--tag' => 'ip-capture-config', '--force' => true]);
 
         $this->publishViewsFor($result['css']);
-        $this->publishFrontendFor($result['frontend']);
+        $this->publishFrontendFor($result['frontend'], force: true);
 
         $this->setCssFramework($result['css']);
         $this->setFrontendFramework($result['frontend']);
