@@ -3,11 +3,11 @@
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
-use Orchestra\Testbench\Foundation\Application;
 use Jeremykenedy\LaravelIpCapture\Contracts\IpResolverInterface;
 use Jeremykenedy\LaravelIpCapture\Providers\IpCaptureServiceProvider;
 use Jeremykenedy\LaravelIpCapture\Services\IpResolver;
 use Jeremykenedy\LaravelIpCapture\Support\IpCapture;
+use Orchestra\Testbench\Foundation\Application;
 
 it('registers the service provider', function () {
     expect(app()->getLoadedProviders())->toHaveKey(IpCaptureServiceProvider::class);
