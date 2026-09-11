@@ -146,3 +146,23 @@ it('keeps the framework lists it advertises in its signature', function () {
     expect(IpCapture::CSS_FRAMEWORKS)->toBe(['tailwind', 'bootstrap5', 'bootstrap4'])
         ->and(IpCapture::FRONTENDS)->toBe(['blade', 'livewire', 'vue', 'react', 'svelte']);
 });
+
+it('rejects an invalid css framework given without a frontend and no prompts', function () {
+    $this->artisan('ip-capture:install', [
+        '--css'            => 'bulma',
+        '--no-interaction' => true,
+        '--force'          => true,
+    ])->expectsOutputToContain('Invalid CSS framework: bulma')->assertFailed();
+
+    expect(config('ip-capture.css_framework'))->not->toBe('bulma');
+});
+
+it('rejects an invalid frontend given without a css framework and no prompts', function () {
+    $this->artisan('ip-capture:install', [
+        '--frontend'       => 'ember',
+        '--no-interaction' => true,
+        '--force'          => true,
+    ])->expectsOutputToContain('Invalid frontend: ember')->assertFailed();
+
+    expect(config('ip-capture.frontend'))->not->toBe('ember');
+});

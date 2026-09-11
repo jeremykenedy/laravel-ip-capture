@@ -8,6 +8,7 @@
 
     const themes = {
         tailwind: {
+            caption: 'sr-only',
             card: 'overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900',
             header: 'border-b border-gray-200 px-4 py-3 dark:border-gray-700',
             title: 'text-sm font-semibold text-gray-900 dark:text-gray-100',
@@ -19,6 +20,7 @@
             empty: 'text-gray-400 dark:text-gray-500',
         },
         bootstrap5: {
+            caption: 'visually-hidden',
             card: 'card',
             header: 'card-header',
             title: 'h6 mb-0',
@@ -30,6 +32,7 @@
             empty: 'text-secondary',
         },
         bootstrap4: {
+            caption: 'sr-only',
             card: 'card',
             header: 'card-header',
             title: 'h6 mb-0',
@@ -52,6 +55,7 @@
 
     <div class="table-responsive">
         <table class={css.table}>
+            <caption class={css.caption}>{title}</caption>
             <thead>
                 <tr>
                     <th scope="col" class={css.th}>{eventHeader}</th>

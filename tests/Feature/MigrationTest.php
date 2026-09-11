@@ -118,3 +118,45 @@ it('stores an address of the configured length', function () {
 
     expect(DB::table('users')->where('id', $id)->value('signup_ip_address'))->toBe($digest);
 });
+
+it('adds no columns when config enables none', function () {
+    config(['ip-capture.columns' => []]);
+
+    $this->createUsersTable();
+
+    $this->artisan('migrate')->assertSuccessful();
+
+    foreach (IpCapture::DEFAULT_COLUMNS as $column) {
+        expect(Schema::hasColumn('users', $column))->toBeFalse();
+    }
+});
+
+it('rolls back the shipped columns even after config changed since the migration ran', function () {
+    $this->createUsersTable();
+
+    $this->artisan('migrate')->assertSuccessful();
+
+    // The application disables a column after migrating. Rollback still has to
+    // clear what the migration created.
+    config(['ip-capture.columns.signup_ip_address' => false]);
+
+    $this->artisan('migrate:rollback')->assertSuccessful();
+
+    foreach (IpCapture::DEFAULT_COLUMNS as $column) {
+        expect(Schema::hasColumn('users', $column))->toBeFalse();
+    }
+});
+
+it('leaves a custom column alone on rollback', function () {
+    config(['ip-capture.columns.reset_ip_address' => true]);
+
+    $this->createUsersTable();
+
+    $this->artisan('migrate')->assertSuccessful();
+    expect(Schema::hasColumn('users', 'reset_ip_address'))->toBeTrue();
+
+    $this->artisan('migrate:rollback')->assertSuccessful();
+
+    expect(Schema::hasColumn('users', 'reset_ip_address'))->toBeTrue()
+        ->and(Schema::hasColumn('users', 'signup_ip_address'))->toBeFalse();
+});

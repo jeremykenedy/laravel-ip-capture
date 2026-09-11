@@ -100,10 +100,14 @@ trait HasInstallPrompts
         }
 
         if ($this->option('no-interaction')) {
-            return [
+            $resolved = [
                 'css'      => $css ?: IpCapture::cssFramework(),
                 'frontend' => $frontend ?: IpCapture::frontend(),
             ];
+
+            return $this->validateSelection($resolved['css'], $resolved['frontend'])
+                ? $resolved
+                : false;
         }
 
         while (true) {

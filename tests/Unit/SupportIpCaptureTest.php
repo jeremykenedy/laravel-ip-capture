@@ -103,3 +103,28 @@ it('ignores an auto capture entry that names no column', function () {
 
     expect(IpCapture::autoCaptureEvents())->toBe(['updating' => 'updated_ip_address']);
 });
+
+it('applies anonymizing and hashing to any address it is given', function () {
+    config(['ip-capture.anonymize' => true, 'ip-capture.hash' => true, 'ip-capture.hash_salt' => 'pepper']);
+
+    expect(IpCapture::prepare('203.0.113.45'))->toBe(hash('sha256', 'pepper203.0.113.0'));
+});
+
+it('returns an address untouched when neither option is on', function () {
+    expect(IpCapture::prepare('203.0.113.45'))->toBe('203.0.113.45');
+});
+
+it('rejects an unsupported algorithm when preparing an address', function () {
+    config(['ip-capture.hash' => true, 'ip-capture.hash_algo' => 'not-a-real-algo']);
+
+    expect(fn () => IpCapture::prepare('203.0.113.45'))
+        ->toThrow(InvalidArgumentException::class, 'Unsupported hashing algorithm [not-a-real-algo]');
+});
+
+it('reports the null ip in the form it is actually stored in', function () {
+    expect(IpCapture::preparedNullIp())->toBe('0.0.0.0');
+
+    config(['ip-capture.hash' => true]);
+
+    expect(IpCapture::preparedNullIp())->toBe(hash('sha256', '0.0.0.0'));
+});

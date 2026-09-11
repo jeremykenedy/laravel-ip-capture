@@ -94,3 +94,43 @@ it('chains the setters', function () {
     expect($result)->toBe($model)
         ->and($model->deleted_ip_address)->toBe('203.0.113.42');
 });
+
+it('hashes an address supplied by the caller, rather than storing it raw', function () {
+    config(['ip-capture.hash' => true]);
+
+    $model = new IpCaptureUser();
+    $model->setIpColumn('signup_ip_address', '198.51.100.4');
+
+    expect($model->signup_ip_address)->toBe(hash('sha256', '198.51.100.4'))
+        ->and($model->signup_ip_address)->not->toBe('198.51.100.4');
+});
+
+it('anonymizes an address supplied by the caller', function () {
+    config(['ip-capture.anonymize' => true]);
+
+    $model = new IpCaptureUser();
+    $model->setIpColumn('signup_ip_address', '198.51.100.4');
+
+    expect($model->signup_ip_address)->toBe('198.51.100.0');
+});
+
+it('writes no column at all when capture is switched off', function () {
+    config(['ip-capture.enabled' => false]);
+
+    $model = new IpCaptureUser();
+    $model->setSignupIp()->setUpdatedIp()->setIpColumn('admin_ip_address', '198.51.100.4');
+
+    expect($model->signup_ip_address)->toBeNull()
+        ->and($model->updated_ip_address)->toBeNull()
+        ->and($model->admin_ip_address)->toBeNull()
+        ->and($model->getIpColumns())->toBe([]);
+});
+
+it('still reads stored columns while capture is switched off', function () {
+    $model = new IpCaptureUser();
+    $model->setSignupIp();
+
+    config(['ip-capture.enabled' => false]);
+
+    expect($model->getIpColumns())->toBe(['signup_ip_address' => '203.0.113.42']);
+});

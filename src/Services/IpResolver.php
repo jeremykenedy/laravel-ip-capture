@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Jeremykenedy\LaravelIpCapture\Services;
 
 use Illuminate\Http\Request;
-use InvalidArgumentException;
 use Jeremykenedy\LaravelIpCapture\Contracts\IpResolverInterface;
 use Jeremykenedy\LaravelIpCapture\Support\IpCapture;
 
@@ -22,17 +21,7 @@ class IpResolver implements IpResolverInterface
             return IpCapture::nullIp();
         }
 
-        $ip = $this->resolve();
-
-        if (IpCapture::shouldAnonymize()) {
-            $ip = IpCapture::anonymize($ip);
-        }
-
-        if (IpCapture::shouldHash()) {
-            return $this->hash($ip);
-        }
-
-        return $ip;
+        return IpCapture::prepare($this->resolve());
     }
 
     protected function resolve(): string
@@ -68,18 +57,5 @@ class IpResolver implements IpResolverInterface
         $candidate = filter_var(trim(explode(',', $value)[0]), FILTER_VALIDATE_IP);
 
         return $candidate === false ? null : $candidate;
-    }
-
-    protected function hash(string $ip): string
-    {
-        $algo = IpCapture::hashAlgo();
-
-        if (!in_array($algo, hash_algos(), true)) {
-            throw new InvalidArgumentException(
-                "Unsupported hashing algorithm [{$algo}] configured in ip-capture.hash_algo."
-            );
-        }
-
-        return hash($algo, IpCapture::hashSalt().$ip);
     }
 }

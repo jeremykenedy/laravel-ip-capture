@@ -23,7 +23,8 @@ All notable changes to this package are documented here. The format follows
 
 ### Changed
 
-- `setIpColumn()` takes an optional second argument so an address can be supplied instead of resolved.
+- `setIpColumn()` takes an optional second argument so an address can be supplied instead of resolved. A supplied address goes through the same anonymizing and hashing as a resolved one.
+- `Support\IpCapture::prepare()` is the single place the storage pipeline is applied, so the resolver and the trait cannot drift apart.
 - The bundled migration reads its table, placement and column length from config, skips a table that is not there, and creates any extra enabled column.
 - The migration file was renamed from `2025_01_01_000000_add_ip_capture_columns_to_users_table.php` to `2026_03_28_135324_add_ip_capture_columns_to_users_table.php`, which is when it was written. Its `down()` refuses to drop the columns when the old file name is already recorded in the migrations table, so an install that predates 1.2 cannot lose data on rollback.
 - The test matrix covers Laravel 10, 11, 12 and 13 against PHP 8.2, 8.3 and 8.4. Laravel 10 and 11 install with advisory blocking off, because every release of both now carries a security advisory upstream.
@@ -31,7 +32,11 @@ All notable changes to this package are documented here. The format follows
 
 ### Fixed
 
-- `enabled` is now read. It was documented as the global switch but nothing acted on it, so setting it to false had no effect.
+- `enabled` is now read. It was documented as the global switch but nothing acted on it, so setting it to false had no effect. It gates the column writes themselves, not just the resolver, so a disabled capture writes nothing rather than writing the null IP.
+- Automatic capture compares against the stored form of the null IP, so with hashing on it no longer overwrites a real address with the digest of `0.0.0.0`.
+- `down()` uses the shipped column list rather than the configured one, so a configuration edited after the migration ran cannot leave a column behind or drop one the migration never created.
+- An empty `columns` array is honoured as enabling none, instead of being treated as absent configuration and creating all six.
+- The installer validates `--css` and `--frontend` in non interactive mode even when only one of them is given.
 - An unsupported `hash_algo` raises an `InvalidArgumentException` naming the value instead of letting a `ValueError` escape in the middle of a request.
 - A proxy header holding something that is not an address no longer stops the lookup, so the next header in the list is tried.
 - The README no longer claims automatic capture happens on its own. It is opt in, and now it exists.

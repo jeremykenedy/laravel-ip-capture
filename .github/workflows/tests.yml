@@ -137,6 +137,9 @@ jobs:
           composer config allow-plugins.pestphp/pest-plugin true
           composer install --prefer-dist --no-interaction
 
+      # Advisory on purpose. An advisory published against a dependency is
+      # worth surfacing, but it is not a reason to fail a build that contains
+      # no change of ours.
       - name: Audit dependencies
         run: composer audit
         continue-on-error: true
@@ -196,6 +199,7 @@ jobs:
             for css in tailwind bootstrap5 bootstrap4; do
               grep -q "$css" "$file" || { echo "$file has no $css class map"; exit 1; }
             done
+            grep -q "<caption" "$file" || { echo "$file renders a table with no caption"; exit 1; }
           done
 
       - name: Livewire stub exists

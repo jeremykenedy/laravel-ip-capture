@@ -50,8 +50,11 @@ return new class() extends Migration {
         }
 
         Schema::table($table, function (Blueprint $blueprint) use ($table) {
+            // Deliberately the shipped list rather than the configured one. A
+            // configuration edited since the migration ran would otherwise
+            // leave a column behind, or drop one this migration never created.
             $existing = array_values(array_filter(
-                $this->targetColumns(),
+                IpCapture::DEFAULT_COLUMNS,
                 fn (string $column): bool => Schema::hasColumn($table, $column),
             ));
 
@@ -79,9 +82,9 @@ return new class() extends Migration {
      */
     private function targetColumns(): array
     {
-        $configured = IpCapture::columns();
-
-        if ($configured === []) {
+        // An absent key falls back to the shipped columns. An empty array is a
+        // deliberate choice to add none, which is not the same thing.
+        if (!config()->has('ip-capture.columns')) {
             return IpCapture::DEFAULT_COLUMNS;
         }
 

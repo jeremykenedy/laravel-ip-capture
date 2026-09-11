@@ -89,9 +89,13 @@ trait CapturesIp
      */
     public function setIpColumn(string $column, ?string $ip = null): static
     {
-        if ($this->ipColumnEnabled($column)) {
-            $this->{$column} = $ip ?? $this->captureIp();
+        if (!$this->shouldWriteIpColumn($column)) {
+            return $this;
         }
+
+        // A supplied address is stored under the same rules as a resolved one,
+        // so hashing and anonymizing are not bypassed by passing one in.
+        $this->{$column} = $ip === null ? $this->captureIp() : IpCapture::prepare($ip);
 
         return $this;
     }
@@ -102,6 +106,14 @@ trait CapturesIp
     protected function ipColumnEnabled(string $column): bool
     {
         return IpCapture::columnEnabled($column);
+    }
+
+    /**
+     * Whether a column may be written, which the master switch also governs.
+     */
+    protected function shouldWriteIpColumn(string $column): bool
+    {
+        return IpCapture::enabled() && $this->ipColumnEnabled($column);
     }
 
     /**
@@ -128,14 +140,16 @@ trait CapturesIp
      */
     protected function captureIpAutomatically(string $column): void
     {
-        if (!$this->ipColumnEnabled($column)) {
+        if (!$this->shouldWriteIpColumn($column)) {
             return;
         }
 
         $ip = $this->captureIp();
         $stored = $this->{$column};
 
-        if ($ip === IpCapture::nullIp() && $stored !== null && $stored !== '') {
+        // Compared against the stored form of the null IP, because hashing and
+        // anonymizing apply to it too.
+        if ($ip === IpCapture::preparedNullIp() && $stored !== null && $stored !== '') {
             return;
         }
 

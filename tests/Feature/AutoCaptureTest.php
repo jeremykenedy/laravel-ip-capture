@@ -114,3 +114,31 @@ it('records a deletion address when the model is saved before deleting', functio
 
     expect($trashed->deleted_ip_address)->toBe('203.0.113.42');
 });
+
+it('keeps a stored address when nothing resolves and hashing is on', function () {
+    config(['ip-capture.hash' => true]);
+    enableAutoCapture();
+
+    $user = IpCaptureUser::create(['name' => 'signing up']);
+
+    DB::table('users')->where('id', $user->getKey())->update([
+        'updated_ip_address' => hash('sha256', '198.51.100.8'),
+    ]);
+    $user->refresh();
+
+    $this->withClientIp(null);
+
+    $user->update(['name' => 'changed from a queued job']);
+
+    expect($user->fresh()->updated_ip_address)->toBe(hash('sha256', '198.51.100.8'))
+        ->and($user->fresh()->updated_ip_address)->not->toBe(hash('sha256', '0.0.0.0'));
+});
+
+it('writes nothing on a model event when capture is switched off', function () {
+    enableAutoCapture();
+    config(['ip-capture.enabled' => false]);
+
+    $user = IpCaptureUser::create(['name' => 'signing up']);
+
+    expect($user->fresh()->signup_ip_address)->toBeNull();
+});

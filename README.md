@@ -213,7 +213,7 @@ class User extends Authenticatable
 | `setAdminIp()` | Sets the admin action IP column |
 | `setUpdatedIp()` | Sets the updated IP column |
 | `setDeletedIp()` | Sets the deleted IP column |
-| `setIpColumn(string $column, ?string $ip = null)` | Sets a specific column, optionally to an address you supply |
+| `setIpColumn(string $column, ?string $ip = null)` | Sets a specific column, optionally to an address you supply. A supplied address goes through the same hashing and anonymizing as a resolved one |
 | `getIpColumns()` | Returns all populated IP columns as an array |
 
 Every setter returns the model, so they chain:
@@ -222,7 +222,7 @@ Every setter returns the model, so they chain:
 $user->setSignupIp()->setAdminIp()->save();
 ```
 
-A setter writes nothing when its column is disabled in config, so enabling a column is the only switch you need.
+A setter writes nothing when its column is disabled in config, and nothing at all when `enabled` is false. Reading `getIpColumns()` keeps working either way.
 
 ### Automatic Capture
 

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Jeremykenedy\LaravelIpCapture\Support;
 
+use InvalidArgumentException;
+
 /**
  * Central resolution point for the package configuration.
  *
@@ -289,6 +291,42 @@ class IpCapture
         }
 
         return ucfirst(str_replace(['_sm_', '_'], [' social ', ' '], $column));
+    }
+
+    /**
+     * Apply the storage pipeline to an address: anonymize, then hash.
+     *
+     * Every path that writes a column goes through here, so a supplied
+     * address is stored under the same rules as a resolved one.
+     */
+    public static function prepare(string $ip): string
+    {
+        if (self::shouldAnonymize()) {
+            $ip = self::anonymize($ip);
+        }
+
+        if (!self::shouldHash()) {
+            return $ip;
+        }
+
+        $algo = self::hashAlgo();
+
+        if (!in_array($algo, hash_algos(), true)) {
+            throw new InvalidArgumentException(
+                "Unsupported hashing algorithm [{$algo}] configured in ip-capture.hash_algo."
+            );
+        }
+
+        return hash($algo, self::hashSalt().$ip);
+    }
+
+    /**
+     * The null IP as it looks once stored, which is what a column holds when
+     * nothing could be resolved.
+     */
+    public static function preparedNullIp(): string
+    {
+        return self::prepare(self::nullIp());
     }
 
     /**
