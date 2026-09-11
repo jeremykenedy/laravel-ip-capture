@@ -37,9 +37,15 @@ it('publishes the javascript components when moving to a javascript frontend', f
     expect(File::exists(resource_path('js/vendor/ip-capture/vue/IpTable.vue')))->toBeTrue();
 });
 
-it('tells the reader how to publish the views for the new framework', function () {
+it('names the framework it just selected in the publish command', function () {
+    // The plain tag resolves the framework again in whatever process runs it,
+    // which is the wrong one when the selection could not be persisted.
     $this->artisan('ip-capture:update', ['--css' => 'bootstrap5'])
-        ->expectsOutputToContain('vendor:publish --tag=ip-capture-views --force')
+        ->expectsOutputToContain('vendor:publish --tag=ip-capture-views-bootstrap5 --force')
+        ->assertSuccessful();
+
+    $this->artisan('ip-capture:update', ['--css' => 'bootstrap4'])
+        ->expectsOutputToContain('vendor:publish --tag=ip-capture-views-bootstrap4 --force')
         ->assertSuccessful();
 });
 
@@ -122,6 +128,6 @@ it('only asks for a view republish when the css framework changed', function () 
         ->assertSuccessful();
 
     $this->artisan('ip-capture:update', ['--css' => 'bootstrap5'])
-        ->expectsOutputToContain('vendor:publish --tag=ip-capture-views --force')
+        ->expectsOutputToContain('vendor:publish --tag=ip-capture-views-bootstrap5 --force')
         ->assertSuccessful();
 });

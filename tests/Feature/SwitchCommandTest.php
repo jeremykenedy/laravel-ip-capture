@@ -85,7 +85,7 @@ it('names the publish command when switching to livewire', function () {
 
 it('tells the reader to republish views when switching css framework', function () {
     $this->artisan('ip-capture:switch', ['--css' => 'bootstrap5'])
-        ->expectsOutputToContain('vendor:publish --tag=ip-capture-views --force')
+        ->expectsOutputToContain('vendor:publish --tag=ip-capture-views-bootstrap5 --force')
         ->assertSuccessful();
 });
 

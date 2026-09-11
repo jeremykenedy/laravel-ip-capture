@@ -49,6 +49,14 @@ class IpCapture
     ];
 
     /**
+     * Model events that fire before Eloquent writes the row.
+     *
+     * Capture assigns an attribute, so an event that fires after the write has
+     * nothing left to affect and is ignored rather than silently doing nothing.
+     */
+    public const CAPTURABLE_EVENTS = ['saving', 'creating', 'updating', 'deleting', 'restoring'];
+
+    /**
      * Kept as a constant so the shipped default survives a published config
      * file written before the headers key existed.
      */
@@ -187,7 +195,11 @@ class IpCapture
         $resolved = [];
 
         foreach ($events as $event => $column) {
-            if (is_string($event) && $event !== '' && is_string($column) && $column !== '') {
+            if (!is_string($event) || !is_string($column) || $column === '') {
+                continue;
+            }
+
+            if (in_array($event, self::CAPTURABLE_EVENTS, true)) {
                 $resolved[$event] = $column;
             }
         }

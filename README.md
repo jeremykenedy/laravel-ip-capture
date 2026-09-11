@@ -249,10 +249,11 @@ IP_CAPTURE_AUTO=true
 ],
 ```
 
-Two things are worth knowing before you switch it on:
+Three things are worth knowing before you switch it on:
 
+- Only events that fire before Eloquent writes the row can be used, because capture assigns an attribute. Those are `saving`, `creating`, `updating`, `deleting` and `restoring`. Anything else, `created` or `saved` for instance, is ignored rather than mapped to a capture that could never reach the database.
 - Events are wired when the model class boots, so the configuration has to be in place before the model is first used.
-- When the current context has no address to offer, such as a queued job or a console command, an address already stored in the column is kept rather than being overwritten with the null IP.
+- When the current context has no address to offer, such as a queued job or a console command, an address already stored in the column is kept rather than being overwritten with the null IP. A column the model never loaded is left alone too, since what it holds is unknown.
 
 The `deleting` event is not in the shipped map on purpose. A soft delete writes only its own columns and a hard delete drops the row, so an address captured there never reaches the database. Call `setDeletedIp()` and save the model yourself when you need that column:
 
@@ -315,7 +316,7 @@ Schema::table('users', function (Blueprint $table) {
 
 Laravel 10 needs `doctrine/dbal` for `change()`. Laravel 11 and newer do not.
 
-An algorithm the PHP `hash()` function does not support is rejected with an `InvalidArgumentException` naming the value, rather than failing in the middle of a request.
+An algorithm the PHP `hash()` function does not support still fails the capture, but with an `InvalidArgumentException` naming the offending value and config key rather than the opaque `ValueError` that `hash()` raises. Set it once and check it before you deploy.
 
 ### Anonymizing
 

@@ -12,7 +12,7 @@ All notable changes to this package are documented here. The format follows
 - Vue, React and Svelte `IpTable` components, publishable with the `ip-capture-js` tag. Each one carries a class map for all three CSS frameworks.
 - A publishable Livewire component and view, `ip-capture-livewire`, which needs no Livewire dependency in the package itself.
 - `ip-capture:install`, `ip-capture:update` and `ip-capture:switch` commands. Passing both `--css` and `--frontend` skips every prompt.
-- Optional automatic capture on Eloquent model events, off by default, configured under `auto_capture`.
+- Optional automatic capture on Eloquent model events, off by default, configured under `auto_capture`. Only events that fire before the row is written are accepted, since capture assigns an attribute.
 - `hash_salt` and `anonymize` options. Both default to off, so stored values are unchanged for existing installs.
 - Configurable `headers`, `table`, `after_column` and `column_length`.
 - `display.mask` and `display.empty_label` for the shipped components.

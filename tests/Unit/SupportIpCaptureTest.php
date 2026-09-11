@@ -143,3 +143,24 @@ it('tells an absent columns key apart from an empty one', function () {
     expect(IpCapture::columnsConfigured())->toBeTrue()
         ->and(IpCapture::enabledColumns())->toBe([]);
 });
+
+it('ignores an event that fires after the row is written', function () {
+    config(['ip-capture.auto_capture.events' => [
+        'creating' => 'signup_ip_address',
+        'created'  => 'admin_ip_address',
+        'saved'    => 'admin_ip_address',
+        'updated'  => 'updated_ip_address',
+        'deleted'  => 'deleted_ip_address',
+    ]]);
+
+    // Capture assigns an attribute, so only an event before the write can work.
+    expect(IpCapture::autoCaptureEvents())->toBe(['creating' => 'signup_ip_address']);
+});
+
+it('accepts every event that fires before the row is written', function () {
+    $events = array_combine(IpCapture::CAPTURABLE_EVENTS, array_fill(0, count(IpCapture::CAPTURABLE_EVENTS), 'signup_ip_address'));
+
+    config(['ip-capture.auto_capture.events' => $events]);
+
+    expect(IpCapture::autoCaptureEvents())->toBe($events);
+});

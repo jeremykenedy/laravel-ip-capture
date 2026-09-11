@@ -62,7 +62,9 @@ class UpdateCommand extends Command
 
             // Only a framework change makes a published view stale, and
             // republishing overwrites whatever the application edited.
-            info('Republish the views: php artisan vendor:publish --tag=ip-capture-views --force');
+            // The framework specific tag, because the plain one resolves the
+            // framework again in whatever process runs it.
+            info("Republish the views: php artisan vendor:publish --tag=ip-capture-views-{$css} --force");
         }
 
         if ($frontend !== null) {

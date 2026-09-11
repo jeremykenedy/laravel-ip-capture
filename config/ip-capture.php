@@ -136,10 +136,14 @@ return [
     | default so adding the trait never writes a column on its own. Set a
     | value to false to ignore that event, or name a different column.
     |
-    | The deleting event is deliberately absent. A soft delete writes only
-    | its own columns and a hard delete drops the row, so an address captured
-    | there never reaches the database. Call setDeletedIp() and save the model
-    | yourself when you need that column.
+    | Only events that fire before Eloquent writes the row can be used, since
+    | capture assigns an attribute: saving, creating, updating, deleting and
+    | restoring. Anything else is ignored.
+    |
+    | The deleting event is deliberately absent from the defaults. A soft
+    | delete writes only its own columns and a hard delete drops the row, so an
+    | address captured there never reaches the database. Call setDeletedIp()
+    | and save the model yourself when you need that column.
     |
     */
 

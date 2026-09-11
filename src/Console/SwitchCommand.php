@@ -49,7 +49,9 @@ class SwitchCommand extends Command
 
             // A view published earlier sits in front of the package views
             // whatever the framework is set to, so it has to be replaced.
-            info('Republish the views: php artisan vendor:publish --tag=ip-capture-views --force');
+            // The framework specific tag, because the plain one resolves the
+            // framework again in whatever process runs it.
+            info("Republish the views: php artisan vendor:publish --tag=ip-capture-views-{$css} --force");
         }
 
         if ($frontend !== null) {
