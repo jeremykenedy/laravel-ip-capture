@@ -176,7 +176,9 @@ $rows = collect(IpCapture::enabledColumns())
     ->map(fn (string $column) => [
         'column'   => $column,
         'label'    => IpCapture::columnLabel($column),
-        'value'    => filled($user->{$column}) ? $user->{$column} : IpCapture::emptyLabel(),
+        'value'    => filled($user->{$column})
+            ? (IpCapture::shouldMaskDisplay() ? IpCapture::mask($user->{$column}) : $user->{$column})
+            : IpCapture::emptyLabel(),
         'captured' => filled($user->{$column}),
     ])
     ->all();
@@ -332,10 +334,17 @@ Drops the host part of the address before it is stored, keeping a /24 for IPv4 a
 IP_CAPTURE_DISPLAY_MASK=true
 ```
 
-Shows `203.0.113.45` as `203.0.113.xxx` in the shipped components without changing what is stored. Individual components can override it:
+Shows `203.0.113.45` as `203.0.113.xxx` in the Blade components without changing what is stored. Individual components can override it:
 
 ```blade
 <x-ip-capture::ip-table :model="$user" :mask="false" />
+```
+
+The Vue, React and Svelte components render the rows they are handed, so mask
+there when you build the rows:
+
+```php
+'value' => IpCapture::mask($user->{$column}),
 ```
 
 ## Configuration

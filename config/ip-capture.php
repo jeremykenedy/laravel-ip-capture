@@ -220,9 +220,12 @@ return [
     | Display
     |--------------------------------------------------------------------------
     |
-    | How captured addresses are presented by the shipped components. Masking
+    | How captured addresses are presented by the Blade components. Masking
     | shows an address as 203.0.113.xxx in the UI without changing what is
     | stored, which is useful for support screens.
+    |
+    | The Vue, React and Svelte components render the rows they are handed, so
+    | apply IpCapture::mask() where those rows are built.
     |
     */
 

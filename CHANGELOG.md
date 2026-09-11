@@ -37,7 +37,7 @@ All notable changes to this package are documented here. The format follows
 - `down()` uses the shipped column list rather than the configured one, so a configuration edited after the migration ran cannot leave a column behind or drop one the migration never created.
 - An empty `columns` array is honoured as enabling none, instead of being treated as absent configuration and creating all six.
 - The installer validates `--css` and `--frontend` in non interactive mode even when only one of them is given.
-- An unsupported `hash_algo` raises an `InvalidArgumentException` naming the value instead of letting a `ValueError` escape in the middle of a request.
+- An unsupported `hash_algo` raises an `InvalidArgumentException` naming the value and config key instead of letting the opaque `ValueError` from `hash()` escape. An algorithm named in uppercase is still accepted, as `hash()` has always matched the name case insensitively.
 - A proxy header holding something that is not an address no longer stops the lookup, so the next header in the list is tried.
 - The README no longer claims automatic capture happens on its own. It is opt in, and now it exists.
 

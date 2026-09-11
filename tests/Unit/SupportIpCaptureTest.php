@@ -164,3 +164,16 @@ it('accepts every event that fires before the row is written', function () {
 
     expect(IpCapture::autoCaptureEvents())->toBe($events);
 });
+
+it('accepts an algorithm named in uppercase, as hash() always has', function () {
+    config(['ip-capture.hash' => true, 'ip-capture.hash_algo' => 'SHA256']);
+
+    expect(IpCapture::prepare('203.0.113.45'))->toBe(hash('sha256', '203.0.113.45'));
+});
+
+it('names the value as configured when rejecting an algorithm', function () {
+    config(['ip-capture.hash' => true, 'ip-capture.hash_algo' => 'SHA999']);
+
+    expect(fn () => IpCapture::prepare('203.0.113.45'))
+        ->toThrow(InvalidArgumentException::class, 'Unsupported hashing algorithm [SHA999]');
+});

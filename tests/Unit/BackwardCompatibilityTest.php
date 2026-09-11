@@ -71,12 +71,14 @@ it('keeps the provider registered under its published name', function () {
 });
 
 it('keeps the config keys shipped since 1.0', function (string $key) {
-    expect(config("ip-capture.{$key}"))->not->toBeNull();
+    // has() rather than a value check, because hash ships as false.
+    expect(config()->has("ip-capture.{$key}"))->toBeTrue();
 })->with([
     ['enabled'],
     ['null_ip'],
     ['columns'],
     ['trust_proxies'],
+    ['hash'],
     ['hash_algo'],
 ]);
 

@@ -332,13 +332,18 @@ class IpCapture
 
         $algo = self::hashAlgo();
 
-        if (!in_array($algo, hash_algos(), true)) {
+        // hash() matches an algorithm name case insensitively while
+        // hash_algos() lists them lowercase, so a setting of SHA256 has always
+        // worked and has to keep working.
+        $normalized = strtolower($algo);
+
+        if (!in_array($normalized, hash_algos(), true)) {
             throw new InvalidArgumentException(
                 "Unsupported hashing algorithm [{$algo}] configured in ip-capture.hash_algo."
             );
         }
 
-        return hash($algo, self::hashSalt().$ip);
+        return hash($normalized, self::hashSalt().$ip);
     }
 
     /**
