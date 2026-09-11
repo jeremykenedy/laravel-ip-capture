@@ -5,9 +5,29 @@ declare(strict_types=1);
 namespace Jeremykenedy\LaravelIpCapture\Traits;
 
 use Jeremykenedy\LaravelIpCapture\Contracts\IpResolverInterface;
+use Jeremykenedy\LaravelIpCapture\Support\IpCapture;
 
 trait CapturesIp
 {
+    /**
+     * Wire the configured model events when automatic capture is switched on.
+     *
+     * Eloquent calls this once per model class, so the configuration has to be
+     * in place before the model is first used.
+     */
+    public static function bootCapturesIp(): void
+    {
+        if (!IpCapture::autoCaptureEnabled()) {
+            return;
+        }
+
+        foreach (IpCapture::autoCaptureEvents() as $event => $column) {
+            static::registerModelEvent($event, static function (self $model) use ($column): void {
+                $model->captureIpAutomatically($column);
+            });
+        }
+    }
+
     /**
      * Get the current client IP address.
      */
@@ -21,11 +41,7 @@ trait CapturesIp
      */
     public function setSignupIp(): static
     {
-        if ($this->ipColumnEnabled('signup_ip_address')) {
-            $this->signup_ip_address = $this->captureIp();
-        }
-
-        return $this;
+        return $this->setIpColumn('signup_ip_address');
     }
 
     /**
@@ -33,11 +49,7 @@ trait CapturesIp
      */
     public function setSignupConfirmationIp(): static
     {
-        if ($this->ipColumnEnabled('signup_confirmation_ip_address')) {
-            $this->signup_confirmation_ip_address = $this->captureIp();
-        }
-
-        return $this;
+        return $this->setIpColumn('signup_confirmation_ip_address');
     }
 
     /**
@@ -45,11 +57,7 @@ trait CapturesIp
      */
     public function setSocialSignupIp(): static
     {
-        if ($this->ipColumnEnabled('signup_sm_ip_address')) {
-            $this->signup_sm_ip_address = $this->captureIp();
-        }
-
-        return $this;
+        return $this->setIpColumn('signup_sm_ip_address');
     }
 
     /**
@@ -57,11 +65,7 @@ trait CapturesIp
      */
     public function setAdminIp(): static
     {
-        if ($this->ipColumnEnabled('admin_ip_address')) {
-            $this->admin_ip_address = $this->captureIp();
-        }
-
-        return $this;
+        return $this->setIpColumn('admin_ip_address');
     }
 
     /**
@@ -69,11 +73,7 @@ trait CapturesIp
      */
     public function setUpdatedIp(): static
     {
-        if ($this->ipColumnEnabled('updated_ip_address')) {
-            $this->updated_ip_address = $this->captureIp();
-        }
-
-        return $this;
+        return $this->setIpColumn('updated_ip_address');
     }
 
     /**
@@ -81,20 +81,16 @@ trait CapturesIp
      */
     public function setDeletedIp(): static
     {
-        if ($this->ipColumnEnabled('deleted_ip_address')) {
-            $this->deleted_ip_address = $this->captureIp();
-        }
-
-        return $this;
+        return $this->setIpColumn('deleted_ip_address');
     }
 
     /**
      * Set a specific IP column to the current client IP.
      */
-    public function setIpColumn(string $column): static
+    public function setIpColumn(string $column, ?string $ip = null): static
     {
         if ($this->ipColumnEnabled($column)) {
-            $this->{$column} = $this->captureIp();
+            $this->{$column} = $ip ?? $this->captureIp();
         }
 
         return $this;
@@ -105,22 +101,44 @@ trait CapturesIp
      */
     protected function ipColumnEnabled(string $column): bool
     {
-        return config("ip-capture.columns.{$column}", false) === true;
+        return IpCapture::columnEnabled($column);
     }
 
     /**
      * Get all IP columns and their values.
+     *
+     * @return array<string, mixed>
      */
     public function getIpColumns(): array
     {
         $columns = [];
 
-        foreach (array_keys(config('ip-capture.columns', [])) as $column) {
+        foreach (array_keys(IpCapture::columns()) as $column) {
             if ($this->ipColumnEnabled($column) && isset($this->{$column})) {
                 $columns[$column] = $this->{$column};
             }
         }
 
         return $columns;
+    }
+
+    /**
+     * Capture during a model event, keeping any address already stored when
+     * the current context has no address to offer, such as a queued job.
+     */
+    protected function captureIpAutomatically(string $column): void
+    {
+        if (!$this->ipColumnEnabled($column)) {
+            return;
+        }
+
+        $ip = $this->captureIp();
+        $stored = $this->{$column};
+
+        if ($ip === IpCapture::nullIp() && $stored !== null && $stored !== '') {
+            return;
+        }
+
+        $this->{$column} = $ip;
     }
 }

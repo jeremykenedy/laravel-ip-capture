@@ -20,35 +20,51 @@ A Laravel package to automatically capture and track IP addresses on Eloquent mo
 
 #### Table of Contents
 
-- [Features](#features)
+- [Framework Support](#framework-support)
 - [Requirements](#requirements)
 - [Installation](#installation)
-- [Configuration](#configuration)
+- [Quick Start](#quick-start)
+  - [Blade](#blade)
+  - [Livewire](#livewire)
+  - [Vue](#vue)
+  - [React](#react)
+  - [Svelte](#svelte)
+- [Features](#features)
 - [Usage](#usage)
   - [Add the Trait](#add-the-trait)
   - [Available Methods](#available-methods)
+  - [Automatic Capture](#automatic-capture)
   - [Custom Columns](#custom-columns)
+- [Privacy](#privacy)
   - [IP Hashing](#ip-hashing)
+  - [Anonymizing](#anonymizing)
+  - [Masking in the UI](#masking-in-the-ui)
+- [Configuration](#configuration)
+- [Changing Frameworks](#changing-frameworks)
+- [Artisan Commands](#artisan-commands)
+- [Publishing Assets](#publishing-assets)
 - [Testing](#testing)
+- [Upgrading](#upgrading)
 - [License](#license)
 
-## Features
+## Framework Support
 
-- Automatic IP capture on model events (signup, login, update, delete)
-- Tracks 6 configurable IP columns per model
-- Simple trait-based integration with any Eloquent model
-- Proxy and load balancer aware (Cloudflare, X-Forwarded-For, etc.)
-- Optional IP hashing for privacy compliance (SHA-256 or custom algorithm)
-- Fluent interface for chaining multiple IP captures
-- Configurable column names and enable/disable per column
-- Publishable config, migrations, and translations
+One CSS framework and one frontend are active at a time, selected in config or with the artisan commands.
+
+| | Blade | Livewire | Vue | React | Svelte |
+|---|---|---|---|---|---|
+| **Tailwind CSS v4** | Yes | Yes | Yes | Yes | Yes |
+| **Bootstrap 5** | Yes | Yes | Yes | Yes | Yes |
+| **Bootstrap 4** | Yes | Yes | Yes | Yes | Yes |
 
 ## Requirements
 
 | Dependency | Version |
 |------------|---------|
-| PHP | ^8.2 \| ^8.3 |
-| Laravel | ^10.0 \| ^11.0 \| ^12.0 \| ^13.0 |
+| PHP | 8.2 or newer |
+| Laravel | 10, 11, 12, 13 |
+
+Laravel 10 and 11 have reached end of life upstream. They remain supported here, and the test matrix still covers them.
 
 ## Installation
 
@@ -56,58 +72,126 @@ A Laravel package to automatically capture and track IP addresses on Eloquent mo
 composer require jeremykenedy/laravel-ip-capture
 ```
 
-Publish the config file:
+Run the installer to publish the config and the views for your chosen frameworks:
 
 ```bash
-php artisan vendor:publish --tag=ip-capture-config
+php artisan ip-capture:install
 ```
 
-Publish and run the migration:
+The installer detects an existing installation and stops rather than overwriting your config and published views. Use `ip-capture:update` to change frameworks, or pass `--force` to reinstall from scratch.
+
+Add the IP columns to your table:
 
 ```bash
-php artisan vendor:publish --tag=ip-capture-migrations
 php artisan migrate
 ```
 
-## Configuration
+The migration ships with the package, so it runs without publishing anything. Publish it only if you want to edit it:
 
-The config file is published to `config/ip-capture.php`.
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `enabled` | bool | `true` | Enable or disable IP capture globally |
-| `null_ip` | string | `'0.0.0.0'` | Fallback value when IP cannot be determined |
-| `trust_proxies` | bool | `true` | Use Laravel trusted proxy headers first |
-| `hash` | bool | `false` | Hash IP addresses before storage |
-| `hash_algo` | string | `'sha256'` | Hashing algorithm (any algo supported by `hash()`) |
-| `columns` | array | see below | Enable/disable individual IP columns |
-
-### Default Columns
-
-| Column | Default |
-|--------|---------|
-| `signup_ip_address` | `true` |
-| `signup_confirmation_ip_address` | `true` |
-| `signup_sm_ip_address` | `true` |
-| `admin_ip_address` | `true` |
-| `updated_ip_address` | `true` |
-| `deleted_ip_address` | `true` |
-
-Environment variables:
-
-```env
-IP_CAPTURE_ENABLED=true
-IP_CAPTURE_NULL_IP=0.0.0.0
-IP_CAPTURE_TRUST_PROXIES=true
-IP_CAPTURE_HASH=false
-IP_CAPTURE_HASH_ALGO=sha256
+```bash
+php artisan vendor:publish --tag=ip-capture-migrations
 ```
+
+## Quick Start
+
+Add the trait to your model, capture an address, and render it.
+
+```php
+use Jeremykenedy\LaravelIpCapture\Traits\CapturesIp;
+
+class User extends Authenticatable
+{
+    use CapturesIp;
+}
+```
+
+```php
+$user->setSignupIp()->save();
+```
+
+### Blade
+
+```blade
+<x-ip-capture::ip-table :model="$user" />
+
+<x-ip-capture::ip-badge :ip="$user->signup_ip_address" label="Signup" />
+```
+
+### Livewire
+
+Publish the component and its view, then render it with the model:
+
+```bash
+php artisan vendor:publish --tag=ip-capture-livewire
+```
+
+```blade
+<livewire:ip-table :model="$user" />
+```
+
+The published component lands in `app/Livewire/IpTable.php` and reloads the model when the table is refreshed.
+
+### Vue
+
+```bash
+php artisan vendor:publish --tag=ip-capture-js
+```
+
+```vue
+<script setup>
+import IpTable from '../js/vendor/ip-capture/vue/IpTable.vue'
+</script>
+
+<template>
+    <IpTable :rows="rows" theme="tailwind" />
+</template>
+```
+
+### React
+
+```jsx
+import IpTable from '../js/vendor/ip-capture/react/IpTable'
+
+<IpTable rows={rows} theme="bootstrap5" />
+```
+
+### Svelte
+
+```svelte
+<script>
+    import IpTable from '../js/vendor/ip-capture/svelte/IpTable.svelte'
+</script>
+
+<IpTable {rows} theme="bootstrap4" />
+```
+
+Every JavaScript component takes the same `rows` array, which you can build from the model:
+
+```php
+$rows = collect($user->getIpColumns())
+    ->map(fn (?string $value, string $column) => [
+        'column'   => $column,
+        'label'    => \Jeremykenedy\LaravelIpCapture\Support\IpCapture::columnLabel($column),
+        'value'    => $value,
+        'captured' => filled($value),
+    ])
+    ->values();
+```
+
+## Features
+
+- Trait based integration with any Eloquent model
+- Optional automatic capture on model events, off by default
+- Proxy and load balancer aware, with a configurable header list
+- Optional hashing with a salt, and optional anonymizing to a /24 or /64 network
+- Blade, Livewire, Vue, React and Svelte components in Tailwind, Bootstrap 5 and Bootstrap 4
+- Install, update and switch commands for changing frameworks
+- Configurable table, column names, column length and per column enable flags
+- Publishable config, migration, views, translations and JavaScript components
 
 ## Usage
 
 ### Add the Trait
-
-Add the `CapturesIp` trait to your User model (or any Eloquent model):
 
 ```php
 use Jeremykenedy\LaravelIpCapture\Traits\CapturesIp;
@@ -129,42 +213,237 @@ class User extends Authenticatable
 | `setAdminIp()` | Sets the admin action IP column |
 | `setUpdatedIp()` | Sets the updated IP column |
 | `setDeletedIp()` | Sets the deleted IP column |
-| `setIpColumn(string $column)` | Sets a specific IP column by name |
+| `setIpColumn(string $column, ?string $ip = null)` | Sets a specific column, optionally to an address you supply |
 | `getIpColumns()` | Returns all populated IP columns as an array |
 
-All setter methods return `static` for fluent chaining:
+Every setter returns the model, so they chain:
 
 ```php
 $user->setSignupIp()->setAdminIp()->save();
 ```
 
-### Custom Columns
+A setter writes nothing when its column is disabled in config, so enabling a column is the only switch you need.
 
-Add a custom column to the config:
+### Automatic Capture
+
+Capture can be wired to Eloquent events instead of being called by hand. It is off by default, so adding the trait never writes a column on its own.
+
+```env
+IP_CAPTURE_AUTO=true
+```
 
 ```php
-'columns' => [
-    'signup_ip_address'  => true,
-    'custom_ip_address'  => true,  // your custom column
+'auto_capture' => [
+    'enabled' => true,
+
+    'events' => [
+        'creating' => 'signup_ip_address',
+        'updating' => 'updated_ip_address',
+    ],
 ],
 ```
 
-Then use `setIpColumn()` to capture:
+Two things are worth knowing before you switch it on:
+
+- Events are wired when the model class boots, so the configuration has to be in place before the model is first used.
+- When the current context has no address to offer, such as a queued job or a console command, an address already stored in the column is kept rather than being overwritten with the null IP.
+
+The `deleting` event is not in the shipped map on purpose. A soft delete writes only its own columns and a hard delete drops the row, so an address captured there never reaches the database. Call `setDeletedIp()` and save the model yourself when you need that column:
 
 ```php
-$user->setIpColumn('custom_ip_address');
+$user->setDeletedIp()->save();
+$user->delete();
 ```
 
-### IP Hashing
+### Custom Columns
 
-Enable hashing for privacy compliance:
+Add the column to config and to your table, then capture into it by name:
+
+```php
+'columns' => [
+    'signup_ip_address' => true,
+    'reset_ip_address'  => true,
+],
+```
+
+```php
+$user->setIpColumn('reset_ip_address');
+```
+
+The bundled migration creates every enabled column, shipped ones first and anything you added after them.
+
+## Privacy
+
+### IP Hashing
 
 ```env
 IP_CAPTURE_HASH=true
 IP_CAPTURE_HASH_ALGO=sha256
+IP_CAPTURE_HASH_SALT=some-value-you-keep
 ```
 
-When enabled, all captured IPs are hashed before storage. This is a one-way operation.
+Hashing is one way. Set the salt before you start storing digests, because changing it changes every digest produced from then on.
+
+The digest has to fit the column. `sha256` produces 64 characters, which matches the shipped column length exactly. `sha512` produces 128, so widen the column before choosing it:
+
+```env
+IP_CAPTURE_COLUMN_LENGTH=128
+```
+
+An algorithm the PHP `hash()` function does not support is rejected with an `InvalidArgumentException` naming the value, rather than failing in the middle of a request.
+
+### Anonymizing
+
+```env
+IP_CAPTURE_ANONYMIZE=true
+```
+
+Drops the host part of the address before it is stored, keeping a /24 for IPv4 and a /64 for IPv6. `203.0.113.45` becomes `203.0.113.0`, and `2001:db8:85a3:1:1:8a2e:370:7334` becomes `2001:db8:85a3:1::`. Anonymizing runs before hashing, so the two can be combined.
+
+### Masking in the UI
+
+```env
+IP_CAPTURE_DISPLAY_MASK=true
+```
+
+Shows `203.0.113.45` as `203.0.113.xxx` in the shipped components without changing what is stored. Individual components can override it:
+
+```blade
+<x-ip-capture::ip-table :model="$user" :mask="false" />
+```
+
+## Configuration
+
+The config file is published to `config/ip-capture.php`.
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `enabled` | bool | `true` | Master switch. When off, every capture resolves to the null IP |
+| `null_ip` | string | `'0.0.0.0'` | Value stored when no address can be determined |
+| `columns` | array | six columns, all enabled | Enable or disable individual IP columns |
+| `trust_proxies` | bool | `true` | Use the address Laravel resolved before reading headers |
+| `headers` | array | seven server keys | Server keys inspected, in order, to resolve the client address |
+| `hash` | bool | `false` | Hash addresses before storage |
+| `hash_algo` | string | `'sha256'` | Any algorithm supported by `hash()` |
+| `hash_salt` | string | `''` | Prepended before hashing so digests resist a rainbow table |
+| `anonymize` | bool | `false` | Keep only the network part of the address |
+| `auto_capture.enabled` | bool | `false` | Wire capture to Eloquent model events |
+| `auto_capture.events` | array | creating, updating | Map of model event to column |
+| `table` | string | `'users'` | Table the bundled migration adds columns to |
+| `after_column` | string | `'password'` | Column the new columns are placed after |
+| `column_length` | int | `64` | Length of each IP column |
+| `css_framework` | string | `'tailwind'` | `tailwind`, `bootstrap5` or `bootstrap4` |
+| `frontend` | string | `'blade'` | `blade`, `livewire`, `vue`, `react` or `svelte` |
+| `views.enabled` | bool | `true` | Register the view namespace and the Blade components |
+| `display.mask` | bool | `false` | Mask the host part in the shipped components |
+| `display.empty_label` | string | `'-'` | Shown for a column that holds no address |
+
+### Default Columns
+
+| Column | Default |
+|--------|---------|
+| `signup_ip_address` | `true` |
+| `signup_confirmation_ip_address` | `true` |
+| `signup_sm_ip_address` | `true` |
+| `admin_ip_address` | `true` |
+| `updated_ip_address` | `true` |
+| `deleted_ip_address` | `true` |
+
+### Environment Variables
+
+```env
+IP_CAPTURE_ENABLED=true
+IP_CAPTURE_NULL_IP=0.0.0.0
+IP_CAPTURE_TRUST_PROXIES=true
+IP_CAPTURE_HASH=false
+IP_CAPTURE_HASH_ALGO=sha256
+IP_CAPTURE_HASH_SALT=
+IP_CAPTURE_ANONYMIZE=false
+IP_CAPTURE_AUTO=false
+IP_CAPTURE_TABLE=users
+IP_CAPTURE_AFTER_COLUMN=password
+IP_CAPTURE_COLUMN_LENGTH=64
+IP_CAPTURE_CSS=tailwind
+IP_CAPTURE_FRONTEND=blade
+IP_CAPTURE_VIEWS=true
+IP_CAPTURE_DISPLAY_MASK=false
+IP_CAPTURE_DISPLAY_EMPTY=-
+```
+
+`IP_CAPTURE_CSS` and `IP_CAPTURE_FRONTEND` fall back to `UI_KIT_CSS` and `UI_KIT_FRONTEND` when they are not set, so the package follows a laravel-ui-kit installation without extra configuration.
+
+## Changing Frameworks
+
+After installation, use **update** or **switch** to change frameworks without losing configuration.
+
+### Update (Interactive)
+
+The update command walks through framework selection with an interactive menu:
+
+```bash
+php artisan ip-capture:update
+```
+
+Or pass options directly:
+
+```bash
+php artisan ip-capture:update --css=bootstrap5 --frontend=vue
+```
+
+| Option | Values | Description |
+|--------|--------|-------------|
+| `--css` | `tailwind`, `bootstrap5`, `bootstrap4` | Change CSS framework |
+| `--frontend` | `blade`, `livewire`, `vue`, `react`, `svelte` | Change frontend framework |
+
+### Switch (Quick)
+
+```bash
+php artisan ip-capture:switch --css=bootstrap5
+php artisan ip-capture:switch --frontend=livewire
+php artisan ip-capture:switch --css=tailwind --frontend=vue
+```
+
+Republish the views after changing the CSS framework so any copy you published matches:
+
+```bash
+php artisan vendor:publish --tag=ip-capture-views --force
+```
+
+After switching to a JavaScript frontend, run `npm run build`.
+
+## Artisan Commands
+
+| Command | Description |
+|---------|-------------|
+| `ip-capture:install` | Fresh install with interactive prompts. Detects existing installation. |
+| `ip-capture:update` | Update framework selection interactively. Does not overwrite config. |
+| `ip-capture:switch` | Quick framework switch via flags. |
+
+### Install Options
+
+| Flag | Description |
+|------|-------------|
+| `--css=` | CSS framework: `tailwind`, `bootstrap5`, `bootstrap4` |
+| `--frontend=` | Frontend: `blade`, `livewire`, `vue`, `react`, `svelte` |
+| `--force` | Skip reinstall confirmation when already installed |
+
+Passing both `--css` and `--frontend` skips every prompt, so all three commands run unattended in a deployment script.
+
+## Publishing Assets
+
+| Tag | Destination |
+|-----|-------------|
+| `ip-capture-config` | `config/ip-capture.php` |
+| `ip-capture-migrations` | `database/migrations` |
+| `ip-capture-lang` | `lang/vendor/ip-capture` |
+| `ip-capture-views` | `resources/views/vendor/ip-capture`, for the active CSS framework |
+| `ip-capture-views-tailwind` | `resources/views/vendor/ip-capture`, Tailwind markup |
+| `ip-capture-views-bootstrap5` | `resources/views/vendor/ip-capture`, Bootstrap 5 markup |
+| `ip-capture-views-bootstrap4` | `resources/views/vendor/ip-capture`, Bootstrap 4 markup |
+| `ip-capture-js` | `resources/js/vendor/ip-capture` |
+| `ip-capture-livewire` | `app/Livewire/IpTable.php` and `resources/views/livewire/ip-table.blade.php` |
+
+Published views are flat, so `resources/views/vendor/ip-capture/ip-table.blade.php` overrides the shipped view for whichever framework is active.
 
 ## Testing
 
@@ -172,11 +451,19 @@ When enabled, all captured IPs are hashed before storage. This is a one-way oper
 composer test
 ```
 
-Or run Pest directly:
+Or run the tools directly:
 
 ```bash
 ./vendor/bin/pest --ci
+./vendor/bin/pint --test
+./vendor/bin/phpstan analyse
 ```
+
+`composer check` runs the linter, static analysis and the test suite in that order.
+
+## Upgrading
+
+See [UPGRADING.md](UPGRADING.md). No public method, config key or publish tag has been removed, so upgrading within 1.x is a composer update.
 
 ## License
 

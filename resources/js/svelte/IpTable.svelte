@@ -1,0 +1,82 @@
+<script>
+    export let rows = []
+    export let title = 'Captured IP addresses'
+    export let theme = 'tailwind'
+    export let eventHeader = 'Event'
+    export let valueHeader = 'Address'
+    export let emptyText = 'No IP addresses have been captured yet.'
+
+    const themes = {
+        tailwind: {
+            card: 'overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900',
+            header: 'border-b border-gray-200 px-4 py-3 dark:border-gray-700',
+            title: 'text-sm font-semibold text-gray-900 dark:text-gray-100',
+            table: 'min-w-full divide-y divide-gray-200 text-left text-sm dark:divide-gray-700',
+            th: 'px-4 py-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400',
+            label: 'whitespace-nowrap px-4 py-2 font-normal text-gray-600 dark:text-gray-300',
+            cell: 'px-4 py-2',
+            code: 'rounded bg-gray-100 px-1.5 py-0.5 font-mono text-xs text-gray-900 dark:bg-gray-800 dark:text-gray-100',
+            empty: 'text-gray-400 dark:text-gray-500',
+        },
+        bootstrap5: {
+            card: 'card',
+            header: 'card-header',
+            title: 'h6 mb-0',
+            table: 'table table-sm mb-0 align-middle',
+            th: 'text-secondary text-uppercase small',
+            label: 'fw-normal text-body-secondary',
+            cell: '',
+            code: 'font-monospace',
+            empty: 'text-secondary',
+        },
+        bootstrap4: {
+            card: 'card',
+            header: 'card-header',
+            title: 'h6 mb-0',
+            table: 'table table-sm mb-0',
+            th: 'text-muted text-uppercase small',
+            label: 'font-weight-normal text-muted',
+            cell: '',
+            code: '',
+            empty: 'text-muted',
+        },
+    }
+
+    $: css = themes[theme] || themes.tailwind
+</script>
+
+<div class={css.card}>
+    <div class={css.header}>
+        <h3 class={css.title}>{title}</h3>
+    </div>
+
+    <div class="table-responsive">
+        <table class={css.table}>
+            <thead>
+                <tr>
+                    <th scope="col" class={css.th}>{eventHeader}</th>
+                    <th scope="col" class={css.th}>{valueHeader}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {#each rows as row (row.column)}
+                    <tr data-column={row.column}>
+                        <th scope="row" class={css.label}>{row.label}</th>
+                        <td class={css.cell}>
+                            {#if row.captured}
+                                <code class={css.code}>{row.value}</code>
+                            {:else}
+                                <span class={css.empty}>{row.value}</span>
+                            {/if}
+                        </td>
+                    </tr>
+                {/each}
+                {#if rows.length === 0}
+                    <tr>
+                        <td colspan="2" class={css.empty}>{emptyText}</td>
+                    </tr>
+                {/if}
+            </tbody>
+        </table>
+    </div>
+</div>

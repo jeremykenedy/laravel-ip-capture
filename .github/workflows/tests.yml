@@ -2,6 +2,13 @@ name: Tests
 
 on: ['push', 'pull_request']
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   tests:
     runs-on: ubuntu-latest
@@ -10,15 +17,29 @@ jobs:
       fail-fast: false
       matrix:
         php: ['8.2', '8.3', '8.4']
-        laravel: ['12.*', '13.*']
+        laravel: ['10.*', '11.*', '12.*', '13.*']
         exclude:
           - php: '8.2'
             laravel: '13.*'
+          - php: '8.4'
+            laravel: '10.*'
         include:
+          # Laravel 10 and 11 have reached end of life and every release now
+          # carries a security advisory, which Composer blocks by default. The
+          # package still supports them, so these rows install with blocking
+          # off to keep proving that. Nothing here ships to production.
+          - laravel: '10.*'
+            testbench: '8.*'
+            composer-flags: '--no-security-blocking'
+          - laravel: '11.*'
+            testbench: '9.*'
+            composer-flags: '--no-security-blocking'
           - laravel: '12.*'
             testbench: '10.*'
+            composer-flags: ''
           - laravel: '13.*'
             testbench: '11.*'
+            composer-flags: ''
 
     name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }}
 
@@ -34,11 +55,18 @@ jobs:
           tools: composer:v2
           coverage: none
 
+      - name: Cache composer downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer/files
+          key: composer-${{ matrix.php }}-${{ matrix.laravel }}-${{ hashFiles('composer.json') }}
+          restore-keys: composer-${{ matrix.php }}-${{ matrix.laravel }}-
+
       - name: Install dependencies
         run: |
           composer config allow-plugins.pestphp/pest-plugin true
           composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update --dev
-          composer update --prefer-dist --no-interaction
+          composer update --prefer-dist --no-interaction ${{ matrix.composer-flags }}
 
       - name: Tests
         run: ./vendor/bin/pest --ci
@@ -64,3 +92,111 @@ jobs:
 
       - name: Pint
         run: ./vendor/bin/pint --test
+
+  static-analysis:
+    runs-on: ubuntu-latest
+    name: PHPStan
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: |
+          composer config allow-plugins.pestphp/pest-plugin true
+          composer install --prefer-dist --no-interaction
+
+      - name: PHPStan
+        run: ./vendor/bin/phpstan analyse --no-progress
+
+  composer-checks:
+    runs-on: ubuntu-latest
+    name: Composer
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+
+      - name: Validate composer.json
+        run: composer validate --strict --no-check-lock
+
+      - name: Install dependencies
+        run: |
+          composer config allow-plugins.pestphp/pest-plugin true
+          composer install --prefer-dist --no-interaction
+
+      - name: Audit dependencies
+        run: composer audit
+        continue-on-error: true
+
+  coverage:
+    runs-on: ubuntu-latest
+    name: Coverage
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo, pdo_sqlite
+          tools: composer:v2
+          coverage: pcov
+
+      - name: Install dependencies
+        run: |
+          composer config allow-plugins.pestphp/pest-plugin true
+          composer install --prefer-dist --no-interaction
+
+      - name: Report coverage
+        run: ./vendor/bin/pest --coverage --ci
+
+  frontend:
+    runs-on: ubuntu-latest
+    name: Frontend components
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Blade views exist for every CSS framework
+        run: |
+          for css in tailwind bootstrap5 bootstrap4; do
+            for view in ip-table ip-badge; do
+              test -f "resources/views/${css}/blade/${view}.blade.php" \
+                || { echo "Missing resources/views/${css}/blade/${view}.blade.php"; exit 1; }
+            done
+          done
+
+      - name: Javascript components exist and accept the documented props
+        run: |
+          test -f resources/js/vue/IpTable.vue || { echo "Missing Vue component"; exit 1; }
+          test -f resources/js/react/IpTable.jsx || { echo "Missing React component"; exit 1; }
+          test -f resources/js/svelte/IpTable.svelte || { echo "Missing Svelte component"; exit 1; }
+          for file in resources/js/vue/IpTable.vue resources/js/react/IpTable.jsx resources/js/svelte/IpTable.svelte; do
+            for prop in rows theme title; do
+              grep -q "$prop" "$file" || { echo "$file does not accept the $prop prop"; exit 1; }
+            done
+            for css in tailwind bootstrap5 bootstrap4; do
+              grep -q "$css" "$file" || { echo "$file has no $css class map"; exit 1; }
+            done
+          done
+
+      - name: Livewire stub exists
+        run: |
+          test -f resources/stubs/livewire/IpTable.php || { echo "Missing Livewire component stub"; exit 1; }
+          test -f resources/stubs/livewire/ip-table.blade.php || { echo "Missing Livewire view stub"; exit 1; }

@@ -1,0 +1,105 @@
+<?php
+
+use Jeremykenedy\LaravelIpCapture\Support\IpCapture;
+
+it('reports the enabled columns in configuration order', function () {
+    config(['ip-capture.columns' => [
+        'signup_ip_address'  => true,
+        'admin_ip_address'   => false,
+        'updated_ip_address' => true,
+    ]]);
+
+    expect(IpCapture::enabledColumns())->toBe(['signup_ip_address', 'updated_ip_address']);
+});
+
+it('treats anything other than true as a disabled column', function () {
+    config(['ip-capture.columns' => ['signup_ip_address' => 1, 'admin_ip_address' => 'yes']]);
+
+    expect(IpCapture::columnEnabled('signup_ip_address'))->toBeFalse()
+        ->and(IpCapture::columnEnabled('admin_ip_address'))->toBeFalse();
+});
+
+it('falls back to the shipped headers when config has none', function () {
+    config(['ip-capture.headers' => []]);
+
+    expect(IpCapture::headers())->toBe(IpCapture::DEFAULT_HEADERS);
+});
+
+it('drops empty entries from a configured header list', function () {
+    config(['ip-capture.headers' => ['HTTP_CF_CONNECTING_IP', '', 'REMOTE_ADDR']]);
+
+    expect(IpCapture::headers())->toBe(['HTTP_CF_CONNECTING_IP', 'REMOTE_ADDR']);
+});
+
+it('falls back to tailwind for an unknown css framework', function () {
+    config(['ip-capture.css_framework' => 'bulma']);
+
+    expect(IpCapture::cssFramework())->toBe('tailwind');
+});
+
+it('falls back to blade for an unknown frontend', function () {
+    config(['ip-capture.frontend' => 'angular']);
+
+    expect(IpCapture::frontend())->toBe('blade');
+});
+
+it('inherits the framework from laravel-ui-kit when its own key is unset', function () {
+    config(['ip-capture.css_framework' => null, 'ui-kit.css_framework' => 'bootstrap5']);
+    config(['ip-capture.frontend' => null, 'ui-kit.frontend' => 'livewire']);
+
+    expect(IpCapture::cssFramework())->toBe('bootstrap5')
+        ->and(IpCapture::frontend())->toBe('livewire');
+});
+
+it('validates the shipped framework lists', function () {
+    expect(IpCapture::isValidCssFramework('bootstrap4'))->toBeTrue()
+        ->and(IpCapture::isValidCssFramework('foundation'))->toBeFalse()
+        ->and(IpCapture::isValidFrontend('svelte'))->toBeTrue()
+        ->and(IpCapture::isValidFrontend('ember'))->toBeFalse();
+});
+
+it('uses the translated label for a shipped column', function () {
+    expect(IpCapture::columnLabel('signup_sm_ip_address'))->toBe('Social signup');
+});
+
+it('builds a readable label for a column it has no translation for', function () {
+    expect(IpCapture::columnLabel('reset_ip_address'))->toBe('Reset ip address');
+});
+
+it('keeps a positive column length and rejects a nonsense one', function () {
+    config(['ip-capture.column_length' => 128]);
+    expect(IpCapture::columnLength())->toBe(128);
+
+    config(['ip-capture.column_length' => 0]);
+    expect(IpCapture::columnLength())->toBe(64);
+});
+
+it('anonymizes addresses to a /24 and a /64', function (string $input, string $expected) {
+    expect(IpCapture::anonymize($input))->toBe($expected);
+})->with([
+    ['203.0.113.45', '203.0.113.0'],
+    ['10.0.0.255', '10.0.0.0'],
+    ['2001:db8:85a3:1:1:8a2e:370:7334', '2001:db8:85a3:1::'],
+    ['not-an-address', 'not-an-address'],
+]);
+
+it('masks addresses for display', function (string $input, string $expected) {
+    expect(IpCapture::mask($input))->toBe($expected);
+})->with([
+    ['203.0.113.45', '203.0.113.xxx'],
+    ['2001:db8:85a3:1:1:8a2e:370:7334', '2001:db8:85a3:1::'],
+    ['not-an-address', 'not-an-address'],
+]);
+
+it('reads the auto capture events as a map of event to column', function () {
+    expect(IpCapture::autoCaptureEvents())->toBe([
+        'creating' => 'signup_ip_address',
+        'updating' => 'updated_ip_address',
+    ]);
+});
+
+it('ignores an auto capture entry that names no column', function () {
+    config(['ip-capture.auto_capture.events' => ['creating' => false, 'updating' => 'updated_ip_address']]);
+
+    expect(IpCapture::autoCaptureEvents())->toBe(['updating' => 'updated_ip_address']);
+});
