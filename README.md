@@ -306,7 +306,11 @@ The digest has to fit the column. `sha256` produces 64 characters, which matches
 IP_CAPTURE_COLUMN_LENGTH=128
 ```
 
-That setting only applies to columns the bundled migration creates, because the
+You do not have to set it: the length is raised to fit the digest of whichever
+algorithm you chose, so `sha512` gets 128 on a fresh install whether or not you
+touch this. Set it when you want more room than that.
+
+Either way it only applies to columns the bundled migration creates, because the
 migration skips a column that is already there. On an installation that has
 already migrated, widen the existing columns yourself:
 
@@ -366,7 +370,7 @@ The config file is published to `config/ip-capture.php`.
 | `auto_capture.events` | array | creating, updating | Map of model event to column |
 | `table` | string | `'users'` | Table the bundled migration adds columns to |
 | `after_column` | string | `'password'` | Column the new columns are placed after |
-| `column_length` | int | `64` | Length of each IP column |
+| `column_length` | int | `64` | Length of each IP column, raised automatically when the chosen hash produces a longer digest |
 | `css_framework` | string | `'tailwind'` | `tailwind`, `bootstrap5` or `bootstrap4` |
 | `frontend` | string | `'blade'` | `blade`, `livewire`, `vue`, `react` or `svelte` |
 | `views.enabled` | bool | `true` | Register the view namespace and the Blade components |
@@ -438,11 +442,13 @@ php artisan ip-capture:switch --frontend=livewire
 php artisan ip-capture:switch --css=tailwind --frontend=vue
 ```
 
-Republish the views after changing the CSS framework so any copy you published matches:
+Republish the views after changing the CSS framework so any copy you published matches. Use the tag for the framework you chose, which is what both commands print:
 
 ```bash
-php artisan vendor:publish --tag=ip-capture-views --force
+php artisan vendor:publish --tag=ip-capture-views-bootstrap5 --force
 ```
+
+The plain `ip-capture-views` tag resolves the framework again in whatever process runs it, so it publishes the wrong markup when the new choice could not be persisted.
 
 After switching to a JavaScript frontend, run `npm run build`.
 

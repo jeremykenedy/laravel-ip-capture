@@ -225,7 +225,31 @@ class IpCapture
     {
         $length = (int) config('ip-capture.column_length', 64);
 
-        return $length > 0 ? $length : 64;
+        if ($length <= 0) {
+            $length = 64;
+        }
+
+        // A digest that cannot fit the column is truncated or rejected on
+        // insert, so the configured length is a floor rather than a cap.
+        return max($length, self::digestLength());
+    }
+
+    /**
+     * How many characters a stored value takes, which only hashing changes.
+     */
+    public static function digestLength(): int
+    {
+        if (!self::shouldHash()) {
+            return 0;
+        }
+
+        $algo = strtolower(self::hashAlgo());
+
+        if (!in_array($algo, hash_algos(), true)) {
+            return 0;
+        }
+
+        return strlen(hash($algo, ''));
     }
 
     /**

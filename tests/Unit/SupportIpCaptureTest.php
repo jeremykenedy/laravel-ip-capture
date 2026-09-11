@@ -177,3 +177,27 @@ it('names the value as configured when rejecting an algorithm', function () {
     expect(fn () => IpCapture::prepare('203.0.113.45'))
         ->toThrow(InvalidArgumentException::class, 'Unsupported hashing algorithm [SHA999]');
 });
+
+it('raises the column length to fit the chosen digest', function () {
+    config(['ip-capture.hash' => true, 'ip-capture.hash_algo' => 'sha512']);
+
+    expect(IpCapture::columnLength())->toBe(128);
+});
+
+it('leaves the configured length alone when it is already wide enough', function () {
+    config(['ip-capture.hash' => true, 'ip-capture.hash_algo' => 'sha256', 'ip-capture.column_length' => 255]);
+
+    expect(IpCapture::columnLength())->toBe(255);
+});
+
+it('keeps the shipped length when hashing is off', function () {
+    expect(IpCapture::columnLength())->toBe(64)
+        ->and(IpCapture::digestLength())->toBe(0);
+});
+
+it('ignores an unusable algorithm when sizing the column', function () {
+    config(['ip-capture.hash' => true, 'ip-capture.hash_algo' => 'not-a-real-algo']);
+
+    expect(IpCapture::digestLength())->toBe(0)
+        ->and(IpCapture::columnLength())->toBe(64);
+});

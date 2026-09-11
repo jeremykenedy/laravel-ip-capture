@@ -14,7 +14,7 @@ All notable changes to this package are documented here. The format follows
 - `ip-capture:install`, `ip-capture:update` and `ip-capture:switch` commands. Passing both `--css` and `--frontend` skips every prompt.
 - Optional automatic capture on Eloquent model events, off by default, configured under `auto_capture`. Only events that fire before the row is written are accepted, since capture assigns an attribute.
 - `hash_salt` and `anonymize` options. Both default to off, so stored values are unchanged for existing installs.
-- Configurable `headers`, `table`, `after_column` and `column_length`.
+- Configurable `headers`, `table`, `after_column` and `column_length`. The length is a floor: it is raised to fit the digest of the chosen hash, so sha512 gets 128 characters without being asked.
 - `display.mask` and `display.empty_label` for the shipped components.
 - Publish tags `ip-capture-views`, `ip-capture-views-tailwind`, `ip-capture-views-bootstrap5`, `ip-capture-views-bootstrap4`, `ip-capture-js` and `ip-capture-livewire`.
 - `Support\IpCapture` as the single resolution point for package configuration.

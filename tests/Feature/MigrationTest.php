@@ -175,3 +175,17 @@ it('adds the columns to a table that has no column to sit after', function () {
         expect(Schema::hasColumn('visits', $column))->toBeTrue();
     }
 });
+
+it('sizes the columns for a sha512 digest without being told to', function () {
+    config(['ip-capture.hash' => true, 'ip-capture.hash_algo' => 'sha512']);
+
+    $this->createUsersTable();
+
+    $this->artisan('migrate')->assertSuccessful();
+
+    $digest = hash('sha512', '203.0.113.9');
+    $id = DB::table('users')->insertGetId(['signup_ip_address' => $digest]);
+
+    expect(strlen($digest))->toBe(128)
+        ->and(DB::table('users')->where('id', $id)->value('signup_ip_address'))->toBe($digest);
+});

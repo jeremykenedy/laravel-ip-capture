@@ -162,8 +162,11 @@ return [
     |--------------------------------------------------------------------------
     |
     | The table the bundled migration adds the IP columns to, the column it
-    | places them after, and the column length. A hashed address needs more
-    | room than an address: sha256 is 64 characters, sha512 is 128.
+    | places them after, and the column length.
+    |
+    | The length is a floor, not a cap. A hashed address needs more room than
+    | an address, sha256 taking 64 characters and sha512 taking 128, so it is
+    | raised to fit the digest of the algorithm above.
     |
     */
 
