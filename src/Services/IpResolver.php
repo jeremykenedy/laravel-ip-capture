@@ -6,6 +6,7 @@ namespace Jeremykenedy\LaravelIpCapture\Services;
 
 use Illuminate\Http\Request;
 use Jeremykenedy\LaravelIpCapture\Contracts\IpResolverInterface;
+use Jeremykenedy\LaravelIpCapture\Support\IpCapture;
 
 class IpResolver implements IpResolverInterface
 {
@@ -16,18 +17,16 @@ class IpResolver implements IpResolverInterface
 
     public function getClientIp(): string
     {
-        $ip = $this->resolve();
-
-        if (config('ip-capture.hash', false)) {
-            return hash(config('ip-capture.hash_algo', 'sha256'), $ip);
+        if (!IpCapture::enabled()) {
+            return IpCapture::nullIp();
         }
 
-        return $ip;
+        return IpCapture::prepare($this->resolve());
     }
 
     protected function resolve(): string
     {
-        if (config('ip-capture.trust_proxies', true)) {
+        if (IpCapture::trustProxies()) {
             $ip = $this->request->ip();
 
             if ($ip !== null && $ip !== '127.0.0.1') {
@@ -35,29 +34,28 @@ class IpResolver implements IpResolverInterface
             }
         }
 
-        $headers = [
-            'HTTP_CF_CONNECTING_IP',
-            'HTTP_X_FORWARDED_FOR',
-            'HTTP_X_FORWARDED',
-            'HTTP_X_CLUSTER_CLIENT_IP',
-            'HTTP_FORWARDED_FOR',
-            'HTTP_FORWARDED',
-            'REMOTE_ADDR',
-        ];
+        foreach (IpCapture::headers() as $header) {
+            $ip = $this->firstValidIp($this->request->server($header));
 
-        foreach ($headers as $header) {
-            $value = $this->request->server($header);
-
-            if ($value !== null) {
-                $ips = array_map('trim', explode(',', $value));
-                $filtered = filter_var($ips[0], FILTER_VALIDATE_IP);
-
-                if ($filtered !== false) {
-                    return $filtered;
-                }
+            if ($ip !== null) {
+                return $ip;
             }
         }
 
-        return config('ip-capture.null_ip', '0.0.0.0');
+        return IpCapture::nullIp();
+    }
+
+    /**
+     * Read the client address out of a header that may hold a proxy chain.
+     */
+    protected function firstValidIp(mixed $value): ?string
+    {
+        if (!is_string($value) || $value === '') {
+            return null;
+        }
+
+        $candidate = filter_var(trim(explode(',', $value)[0]), FILTER_VALIDATE_IP);
+
+        return $candidate === false ? null : $candidate;
     }
 }

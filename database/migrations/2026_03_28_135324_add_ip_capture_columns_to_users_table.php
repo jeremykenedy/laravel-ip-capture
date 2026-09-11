@@ -1,0 +1,108 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Migrations\MigrationRepositoryInterface;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+use Jeremykenedy\LaravelIpCapture\Support\IpCapture;
+
+return new class() extends Migration {
+    /**
+     * The file name this migration shipped under up to version 1.1.
+     */
+    private const LEGACY_NAME = '2025_01_01_000000_add_ip_capture_columns_to_users_table';
+
+    public function up(): void
+    {
+        $table = IpCapture::table();
+
+        if (!Schema::hasTable($table)) {
+            return;
+        }
+
+        Schema::table($table, function (Blueprint $blueprint) use ($table) {
+            $length = IpCapture::columnLength();
+
+            // Placement is only honoured when the column to sit after is
+            // really there. MySQL rejects AFTER on a column it cannot find,
+            // which a configurable table makes easy to hit.
+            $after = IpCapture::afterColumn();
+            $place = Schema::hasColumn($table, $after);
+
+            foreach ($this->targetColumns() as $column) {
+                if (!Schema::hasColumn($table, $column)) {
+                    $definition = $blueprint->string($column, $length)->nullable();
+
+                    if ($place) {
+                        $definition->after($after);
+                    }
+                }
+
+                $after = $column;
+                $place = $place || Schema::hasColumn($table, $column);
+            }
+        });
+    }
+
+    public function down(): void
+    {
+        $table = IpCapture::table();
+
+        if (!Schema::hasTable($table)) {
+            return;
+        }
+
+        // The columns were added under the old file name in installs that
+        // predate 1.2, where this migration did not create them and must not
+        // drop them.
+        if ($this->appliedUnderLegacyName()) {
+            return;
+        }
+
+        Schema::table($table, function (Blueprint $blueprint) use ($table) {
+            // Deliberately the shipped list rather than the configured one. A
+            // configuration edited since the migration ran would otherwise
+            // leave a column behind, or drop one this migration never created.
+            $existing = array_values(array_filter(
+                IpCapture::DEFAULT_COLUMNS,
+                fn (string $column): bool => Schema::hasColumn($table, $column),
+            ));
+
+            if ($existing !== []) {
+                $blueprint->dropColumn($existing);
+            }
+        });
+    }
+
+    private function appliedUnderLegacyName(): bool
+    {
+        $repository = app('migration.repository');
+
+        if (!$repository instanceof MigrationRepositoryInterface || !$repository->repositoryExists()) {
+            return false;
+        }
+
+        return in_array(self::LEGACY_NAME, $repository->getRan(), true);
+    }
+
+    /**
+     * The enabled columns, shipped ones first, then anything added to config.
+     *
+     * @return list<string>
+     */
+    private function targetColumns(): array
+    {
+        // An absent key falls back to the shipped columns. An empty array is a
+        // deliberate choice to add none, which is not the same thing.
+        if (!IpCapture::columnsConfigured()) {
+            return IpCapture::DEFAULT_COLUMNS;
+        }
+
+        $enabled = IpCapture::enabledColumns();
+
+        $ordered = array_values(array_intersect(IpCapture::DEFAULT_COLUMNS, $enabled));
+        $custom = array_values(array_diff($enabled, IpCapture::DEFAULT_COLUMNS));
+
+        return array_merge($ordered, $custom);
+    }
+};

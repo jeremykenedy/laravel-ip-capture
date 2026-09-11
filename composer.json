@@ -1,7 +1,7 @@
 {
     "name": "jeremykenedy/laravel-ip-capture",
     "description": "A Laravel package to automatically capture and track IP addresses on Eloquent model actions such as signup, login, update, and deletion.",
-    "keywords": ["laravel", "ip", "capture", "tracking", "audit", "security"],
+    "keywords": ["laravel", "ip", "capture", "tracking", "audit", "security", "privacy", "gdpr", "tailwind", "bootstrap", "livewire", "vue", "react", "svelte"],
     "license": "MIT",
     "type": "library",
     "authors": [
@@ -10,17 +10,28 @@
             "email": "jeremykenedy@gmail.com"
         }
     ],
+    "support": {
+        "issues": "https://github.com/jeremykenedy/laravel-ip-capture/issues",
+        "source": "https://github.com/jeremykenedy/laravel-ip-capture"
+    },
     "require": {
-        "php": "^8.2|^8.3",
-        "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+        "php": "^8.2",
+        "illuminate/console": "^10.0|^11.0|^12.0|^13.0",
         "illuminate/database": "^10.0|^11.0|^12.0|^13.0",
-        "illuminate/http": "^10.0|^11.0|^12.0|^13.0"
+        "illuminate/http": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/view": "^10.0|^11.0|^12.0|^13.0",
+        "laravel/prompts": "^0.1|^0.2|^0.3"
     },
     "require-dev": {
         "laravel/pint": "^1.0",
         "orchestra/testbench": "^8.0|^9.0|^10.0|^11.0",
         "pestphp/pest": "^2.0|^3.0|^4.0",
-        "pestphp/pest-plugin-laravel": "^2.0|^3.0|^4.0"
+        "pestphp/pest-plugin-laravel": "^2.0|^3.0|^4.0",
+        "phpstan/phpstan": "^1.11|^2.0"
+    },
+    "suggest": {
+        "livewire/livewire": "Required to use the Livewire IP table component (^3.0)."
     },
     "autoload": {
         "psr-4": {
@@ -47,7 +58,15 @@
     },
     "scripts": {
         "test": "vendor/bin/pest --ci",
-        "lint": "vendor/bin/pint --test"
+        "test:coverage": "vendor/bin/pest --coverage --min=80",
+        "lint": "vendor/bin/pint --test",
+        "lint:fix": "vendor/bin/pint",
+        "analyse": "vendor/bin/phpstan analyse",
+        "check": [
+            "@lint",
+            "@analyse",
+            "@test"
+        ]
     },
     "minimum-stability": "stable",
     "prefer-stable": true

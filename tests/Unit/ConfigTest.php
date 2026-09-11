@@ -1,5 +1,7 @@
 <?php
 
+use Jeremykenedy\LaravelIpCapture\Support\IpCapture;
+
 it('has default config values', function () {
     expect(config('ip-capture.enabled'))->toBeTrue();
     expect(config('ip-capture.null_ip'))->toBe('0.0.0.0');
@@ -39,4 +41,39 @@ it('resolves config via dot notation', function () {
     expect(config('ip-capture'))->toBeArray();
     expect(config('ip-capture.columns'))->toBeArray();
     expect(config('ip-capture.columns.signup_ip_address'))->toBeBool();
+});
+
+it('ships the privacy options switched off', function () {
+    expect(config('ip-capture.hash_salt'))->toBe('');
+    expect(config('ip-capture.anonymize'))->toBeFalse();
+});
+
+it('ships automatic capture switched off', function () {
+    expect(config('ip-capture.auto_capture.enabled'))->toBeFalse();
+});
+
+it('ships database defaults that match the bundled migration', function () {
+    expect(config('ip-capture.table'))->toBe('users');
+    expect(config('ip-capture.after_column'))->toBe('password');
+    expect(config('ip-capture.column_length'))->toBe(64);
+});
+
+it('ships the proxy header list in priority order', function () {
+    expect(config('ip-capture.headers'))->toBe([
+        'HTTP_CF_CONNECTING_IP',
+        'HTTP_X_FORWARDED_FOR',
+        'HTTP_X_FORWARDED',
+        'HTTP_X_CLUSTER_CLIENT_IP',
+        'HTTP_FORWARDED_FOR',
+        'HTTP_FORWARDED',
+        'REMOTE_ADDR',
+    ]);
+});
+
+it('ships tailwind and blade as the effective frontend defaults', function () {
+    // The keys themselves ship unset so a laravel-ui-kit setting can be
+    // inherited. The accessors are what the package reads.
+    expect(IpCapture::cssFramework())->toBe('tailwind');
+    expect(IpCapture::frontend())->toBe('blade');
+    expect(config('ip-capture.views.enabled'))->toBeTrue();
 });
