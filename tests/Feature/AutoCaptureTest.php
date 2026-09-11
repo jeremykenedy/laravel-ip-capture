@@ -142,3 +142,38 @@ it('writes nothing on a model event when capture is switched off', function () {
 
     expect($user->fresh()->signup_ip_address)->toBeNull();
 });
+
+it('leaves a column it never loaded alone when nothing resolves', function () {
+    enableAutoCapture();
+
+    $user = IpCaptureUser::create(['name' => 'signing up']);
+
+    DB::table('users')->where('id', $user->getKey())->update([
+        'updated_ip_address' => '198.51.100.8',
+    ]);
+
+    $this->withClientIp(null);
+
+    // A partial select leaves updated_ip_address out of the attributes, so its
+    // stored value is unknown rather than empty.
+    $partial = IpCaptureUser::query()->select(['id', 'name'])->find($user->getKey());
+    $partial->name = 'renamed by a queued job';
+    $partial->save();
+
+    expect(DB::table('users')->where('id', $user->getKey())->value('updated_ip_address'))
+        ->toBe('198.51.100.8');
+});
+
+it('writes the null address into a column that is loaded and empty', function () {
+    enableAutoCapture();
+
+    $id = IpCaptureUser::create(['name' => 'signing up'])->getKey();
+
+    $this->withClientIp(null);
+
+    // Loaded in full, so the column is known to be empty rather than unknown.
+    $user = IpCaptureUser::query()->find($id);
+    $user->update(['name' => 'renamed with no context']);
+
+    expect($user->fresh()->updated_ip_address)->toBe('0.0.0.0');
+});

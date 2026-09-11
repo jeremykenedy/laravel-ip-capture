@@ -128,3 +128,11 @@ it('reports the null ip in the form it is actually stored in', function () {
 
     expect(IpCapture::preparedNullIp())->toBe(hash('sha256', '0.0.0.0'));
 });
+
+it('tells an absent columns key apart from an empty one', function () {
+    expect(IpCapture::columnsConfigured())->toBeTrue();
+
+    config(['ip-capture.columns' => []]);
+    expect(IpCapture::columnsConfigured())->toBeTrue()
+        ->and(IpCapture::enabledColumns())->toBe([]);
+});

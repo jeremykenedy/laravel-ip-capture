@@ -104,6 +104,15 @@ class IpCapture
         return array_keys(array_filter(self::columns()));
     }
 
+    /**
+     * Whether the columns key is present at all, which is not the same as it
+     * being present and empty.
+     */
+    public static function columnsConfigured(): bool
+    {
+        return config()->has('ip-capture.columns');
+    }
+
     public static function columnEnabled(string $column): bool
     {
         return (self::columns()[$column] ?? false) === true;

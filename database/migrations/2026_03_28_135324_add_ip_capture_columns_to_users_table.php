@@ -84,7 +84,7 @@ return new class() extends Migration {
     {
         // An absent key falls back to the shipped columns. An empty array is a
         // deliberate choice to add none, which is not the same thing.
-        if (!config()->has('ip-capture.columns')) {
+        if (!IpCapture::columnsConfigured()) {
             return IpCapture::DEFAULT_COLUMNS;
         }
 

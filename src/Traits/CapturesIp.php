@@ -145,14 +145,33 @@ trait CapturesIp
         }
 
         $ip = $this->captureIp();
-        $stored = $this->{$column};
 
-        // Compared against the stored form of the null IP, because hashing and
-        // anonymizing apply to it too.
-        if ($ip === IpCapture::preparedNullIp() && $stored !== null && $stored !== '') {
+        if ($ip === IpCapture::preparedNullIp() && !$this->ipColumnIsSafeToOverwrite($column)) {
             return;
         }
 
         $this->{$column} = $ip;
+    }
+
+    /**
+     * Whether writing an unresolved address over this column loses anything.
+     *
+     * Compared against the stored form of the null IP, because hashing and
+     * anonymizing apply to that too. A column missing from the attributes of a
+     * persisted model was never loaded, so what it holds is unknown.
+     */
+    protected function ipColumnIsSafeToOverwrite(string $column): bool
+    {
+        if (!$this->exists) {
+            return true;
+        }
+
+        if (!array_key_exists($column, $this->getAttributes())) {
+            return false;
+        }
+
+        $stored = $this->{$column};
+
+        return $stored === null || $stored === '';
     }
 }
