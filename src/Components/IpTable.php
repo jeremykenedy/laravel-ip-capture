@@ -12,7 +12,7 @@ use Jeremykenedy\LaravelIpCapture\Support\IpCapture;
 class IpTable extends Component
 {
     /**
-     * @param  array<string, mixed>|null  $columns
+     * @param array<string, mixed>|null $columns
      */
     public function __construct(
         public ?Model $model = null,

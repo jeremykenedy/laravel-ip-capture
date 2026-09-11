@@ -110,7 +110,7 @@ class IpCaptureServiceProvider extends ServiceProvider
         ], 'ip-capture-js');
 
         $this->publishes([
-            __DIR__.'/../../resources/stubs/livewire/IpTable.php'       => app_path('Livewire/IpTable.php'),
+            __DIR__.'/../../resources/stubs/livewire/IpTable.php'        => app_path('Livewire/IpTable.php'),
             __DIR__.'/../../resources/stubs/livewire/ip-table.blade.php' => resource_path('views/livewire/ip-table.blade.php'),
         ], 'ip-capture-livewire');
     }

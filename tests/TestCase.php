@@ -10,8 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
-use Jeremykenedy\LaravelIpCapture\Support\IpCapture;
 use Jeremykenedy\LaravelIpCapture\Providers\IpCaptureServiceProvider;
+use Jeremykenedy\LaravelIpCapture\Support\IpCapture;
 use Orchestra\Testbench\TestCase as OrchestraTestCase;
 
 abstract class TestCase extends OrchestraTestCase
