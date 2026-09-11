@@ -21,15 +21,25 @@ return new class() extends Migration {
         }
 
         Schema::table($table, function (Blueprint $blueprint) use ($table) {
-            $after = IpCapture::afterColumn();
             $length = IpCapture::columnLength();
+
+            // Placement is only honoured when the column to sit after is
+            // really there. MySQL rejects AFTER on a column it cannot find,
+            // which a configurable table makes easy to hit.
+            $after = IpCapture::afterColumn();
+            $place = Schema::hasColumn($table, $after);
 
             foreach ($this->targetColumns() as $column) {
                 if (!Schema::hasColumn($table, $column)) {
-                    $blueprint->string($column, $length)->nullable()->after($after);
+                    $definition = $blueprint->string($column, $length)->nullable();
+
+                    if ($place) {
+                        $definition->after($after);
+                    }
                 }
 
                 $after = $column;
+                $place = $place || Schema::hasColumn($table, $column);
             }
         });
     }

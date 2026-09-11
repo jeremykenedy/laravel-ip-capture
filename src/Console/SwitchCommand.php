@@ -21,10 +21,10 @@ class SwitchCommand extends Command
 
     public function handle(): int
     {
-        $css = $this->option('css');
-        $frontend = $this->option('frontend');
+        $css = $this->suppliedOption('css');
+        $frontend = $this->suppliedOption('frontend');
 
-        if (!$css && !$frontend) {
+        if ($css === null && $frontend === null) {
             $this->error('Provide at least one of --css or --frontend.');
             $this->line('');
             $this->line('  Examples:');
@@ -35,15 +35,15 @@ class SwitchCommand extends Command
             return self::FAILURE;
         }
 
-        if ($css && !$this->validateCssFramework($css)) {
+        if ($css !== null && !$this->validateCssFramework($css)) {
             return self::FAILURE;
         }
 
-        if ($frontend && !$this->validateFrontend($frontend)) {
+        if ($frontend !== null && !$this->validateFrontend($frontend)) {
             return self::FAILURE;
         }
 
-        if ($css) {
+        if ($css !== null) {
             $this->setCssFramework($css);
             info("IP Capture CSS framework switched to: {$css}");
 
@@ -52,7 +52,7 @@ class SwitchCommand extends Command
             info('Republish the views: php artisan vendor:publish --tag=ip-capture-views --force');
         }
 
-        if ($frontend) {
+        if ($frontend !== null) {
             $this->setFrontendFramework($frontend);
             info("IP Capture frontend switched to: {$frontend}");
 

@@ -166,3 +166,11 @@ it('rejects an invalid frontend given without a css framework and no prompts', f
 
     expect(config('ip-capture.frontend'))->not->toBe('ember');
 });
+
+it('reports a zero as the invalid value it is', function () {
+    $this->artisan('ip-capture:install', [
+        '--css'            => '0',
+        '--no-interaction' => true,
+        '--force'          => true,
+    ])->expectsOutputToContain('Invalid CSS framework: 0')->assertFailed();
+});

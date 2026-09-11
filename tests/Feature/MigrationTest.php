@@ -160,3 +160,18 @@ it('leaves a custom column alone on rollback', function () {
     expect(Schema::hasColumn('users', 'reset_ip_address'))->toBeTrue()
         ->and(Schema::hasColumn('users', 'signup_ip_address'))->toBeFalse();
 });
+
+it('adds the columns to a table that has no column to sit after', function () {
+    config(['ip-capture.table' => 'visits', 'ip-capture.after_column' => 'password']);
+
+    Schema::create('visits', function ($table) {
+        $table->id();
+        $table->string('referrer')->nullable();
+    });
+
+    $this->artisan('migrate')->assertSuccessful();
+
+    foreach (IpCapture::DEFAULT_COLUMNS as $column) {
+        expect(Schema::hasColumn('visits', $column))->toBeTrue();
+    }
+});

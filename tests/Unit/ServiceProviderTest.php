@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Orchestra\Testbench\Foundation\Application;
 use Jeremykenedy\LaravelIpCapture\Contracts\IpResolverInterface;
 use Jeremykenedy\LaravelIpCapture\Providers\IpCaptureServiceProvider;
 use Jeremykenedy\LaravelIpCapture\Services\IpResolver;
@@ -66,12 +67,17 @@ it('registers the blade components under the package namespace', function () {
 });
 
 it('leaves the view namespace unregistered when views are switched off', function () {
-    config(['ip-capture.views.enabled' => false]);
+    // A second boot cannot unregister what the first one added, so this needs
+    // its own application built with the option already off.
+    $app = Application::create(basePath: $this->app->basePath());
 
-    $provider = new IpCaptureServiceProvider($this->app);
-    $provider->boot();
+    // Set before the provider registers, because mergeConfigFrom leaves an
+    // existing value in place.
+    $app['config']->set('ip-capture.views', ['enabled' => false]);
+    $app->register(IpCaptureServiceProvider::class);
 
-    expect(IpCapture::viewsEnabled())->toBeFalse();
+    expect($app['view']->exists('ip-capture::ip-table'))->toBeFalse()
+        ->and($this->app['view']->exists('ip-capture::ip-table'))->toBeTrue();
 });
 
 it('registers a publish tag for every shipped asset', function (string $tag) {

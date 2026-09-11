@@ -94,3 +94,11 @@ it('names no publish command when switching to blade', function () {
         ->doesntExpectOutputToContain('ip-capture-js')
         ->assertSuccessful();
 });
+
+it('reports a zero as the invalid value it is', function () {
+    $this->artisan('ip-capture:switch', ['--css' => '0', '--frontend' => 'vue'])
+        ->expectsOutputToContain('Invalid CSS framework: 0')
+        ->assertFailed();
+
+    expect(config('ip-capture.frontend'))->not->toBe('vue');
+});

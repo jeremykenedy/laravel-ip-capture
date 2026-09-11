@@ -282,6 +282,8 @@ Two limits are worth knowing, both from the migration reading configuration rath
 
 - Rollback drops the six shipped columns it finds on the table, whether or not this migration created them. A column another package had already created is dropped too. Rollback does not touch columns you added through config.
 - `table` and `after_column` have to stay put once the migration has run. Changing `table` afterwards means rollback inspects the new table and leaves the columns on the old one.
+- The migration does nothing when the table is absent, rather than failing, so the package can be installed in an application that has no `users` table. It is still recorded as run, so a table created by a later migration does not get the columns. Run the migration again with `php artisan migrate:refresh --path=...` in that case, or add the columns in your own migration.
+- `after_column` is only honoured when that column exists on the table. The columns are appended otherwise.
 
 ## Privacy
 
@@ -295,11 +297,23 @@ IP_CAPTURE_HASH_SALT=some-value-you-keep
 
 Hashing is one way. Set the salt before you start storing digests, because changing it changes every digest produced from then on.
 
-The digest has to fit the column. `sha256` produces 64 characters, which matches the shipped column length exactly. `sha512` produces 128, so widen the column before choosing it:
+The digest has to fit the column. `sha256` produces 64 characters, which matches the shipped column length exactly. `sha512` produces 128, so the column has to be wider before you choose it:
 
 ```env
 IP_CAPTURE_COLUMN_LENGTH=128
 ```
+
+That setting only applies to columns the bundled migration creates, because the
+migration skips a column that is already there. On an installation that has
+already migrated, widen the existing columns yourself:
+
+```php
+Schema::table('users', function (Blueprint $table) {
+    $table->string('signup_ip_address', 128)->nullable()->change();
+});
+```
+
+Laravel 10 needs `doctrine/dbal` for `change()`. Laravel 11 and newer do not.
 
 An algorithm the PHP `hash()` function does not support is rejected with an `InvalidArgumentException` naming the value, rather than failing in the middle of a request.
 
@@ -422,6 +436,12 @@ php artisan vendor:publish --tag=ip-capture-views --force
 
 After switching to a JavaScript frontend, run `npm run build`.
 
+Both commands persist the choice by writing `IP_CAPTURE_CSS` and
+`IP_CAPTURE_FRONTEND` to `.env`. If you published the config and replaced those
+`env()` calls with literal values, the literal wins on the next process and the
+command's change does not survive. Edit `config/ip-capture.php` in that case.
+The commands say so when there is no `.env` to write to.
+
 ## Artisan Commands
 
 | Command | Description |
@@ -438,7 +458,7 @@ After switching to a JavaScript frontend, run `npm run build`.
 | `--frontend=` | Frontend: `blade`, `livewire`, `vue`, `react`, `svelte` |
 | `--force` | Skip reinstall confirmation when already installed |
 
-Passing both `--css` and `--frontend` skips every prompt, so all three commands run unattended in a deployment script.
+Passing both `--css` and `--frontend` skips the framework prompts, so all three commands run unattended. `ip-capture:install` also needs `--force` once `config/ip-capture.php` exists, because it stops rather than overwrite a config and published views it did not write.
 
 ## Publishing Assets
 

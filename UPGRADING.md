@@ -20,7 +20,11 @@ was written rather than the placeholder date it shipped with.
 A migration file name is its identity in the `migrations` table, so an
 application that already ran the old file sees an unrun migration after
 upgrading. Running `php artisan migrate` is safe: every column is guarded by
-`Schema::hasColumn`, so nothing is altered and only a bookkeeping row is added.
+`Schema::hasColumn`, so no existing column is altered.
+
+One thing it can do is add a column. The migration takes its list from
+configuration, so a column you enabled in config after the old migration ran is
+created now. Nothing is dropped or changed either way.
 
 `down()` checks for the old file name in the `migrations` table and refuses to
 drop the columns when it finds it, so a rollback cannot delete data that an

@@ -109,3 +109,19 @@ it('leaves a published javascript component as the application edited it', funct
 
     expect(File::get(resource_path('js/vendor/ip-capture/vue/IpTable.vue')))->toBe('// edited by the application');
 });
+
+it('reports a zero as the invalid value it is', function () {
+    $this->artisan('ip-capture:update', ['--css' => '0', '--frontend' => 'vue'])
+        ->expectsOutputToContain('Invalid CSS framework: 0')
+        ->assertFailed();
+});
+
+it('only asks for a view republish when the css framework changed', function () {
+    $this->artisan('ip-capture:update', ['--frontend' => 'react'])
+        ->doesntExpectOutputToContain('ip-capture-views')
+        ->assertSuccessful();
+
+    $this->artisan('ip-capture:update', ['--css' => 'bootstrap5'])
+        ->expectsOutputToContain('vendor:publish --tag=ip-capture-views --force')
+        ->assertSuccessful();
+});

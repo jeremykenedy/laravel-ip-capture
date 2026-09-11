@@ -34,10 +34,10 @@ class UpdateCommand extends Command
             return self::FAILURE;
         }
 
-        $css = $this->option('css');
-        $frontend = $this->option('frontend');
+        $css = $this->suppliedOption('css');
+        $frontend = $this->suppliedOption('frontend');
 
-        if (!$css && !$frontend) {
+        if ($css === null && $frontend === null) {
             $result = $this->promptFrameworks();
 
             if ($result === false) {
@@ -47,27 +47,31 @@ class UpdateCommand extends Command
             $css = $result['css'];
             $frontend = $result['frontend'];
         } else {
-            if ($css && !$this->validateCssFramework($css)) {
+            if ($css !== null && !$this->validateCssFramework($css)) {
                 return self::FAILURE;
             }
 
-            if ($frontend && !$this->validateFrontend($frontend)) {
+            if ($frontend !== null && !$this->validateFrontend($frontend)) {
                 return self::FAILURE;
             }
         }
 
-        if ($css) {
+        if ($css !== null) {
             $this->setCssFramework($css);
             info("CSS framework updated to: {$css}");
+
+            // Only a framework change makes a published view stale, and
+            // republishing overwrites whatever the application edited.
+            info('Republish the views: php artisan vendor:publish --tag=ip-capture-views --force');
         }
 
-        if ($frontend) {
+        if ($frontend !== null) {
             $this->setFrontendFramework($frontend);
             $this->publishFrontendFor($frontend);
             info("Frontend updated to: {$frontend}");
         }
 
-        info('Run: php artisan vendor:publish --tag=ip-capture-views --force');
+        info('Run: php artisan view:clear');
 
         return self::SUCCESS;
     }

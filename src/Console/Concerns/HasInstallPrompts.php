@@ -88,10 +88,10 @@ trait HasInstallPrompts
      */
     protected function promptFrameworks(): array|false
     {
-        $css = $this->option('css');
-        $frontend = $this->option('frontend');
+        $css = $this->suppliedOption('css');
+        $frontend = $this->suppliedOption('frontend');
 
-        if ($css && $frontend) {
+        if ($css !== null && $frontend !== null) {
             if (!$this->validateSelection($css, $frontend)) {
                 return false;
             }
@@ -101,8 +101,8 @@ trait HasInstallPrompts
 
         if ($this->option('no-interaction')) {
             $resolved = [
-                'css'      => $css ?: IpCapture::cssFramework(),
-                'frontend' => $frontend ?: IpCapture::frontend(),
+                'css'      => $css ?? IpCapture::cssFramework(),
+                'frontend' => $frontend ?? IpCapture::frontend(),
             ];
 
             return $this->validateSelection($resolved['css'], $resolved['frontend'])
@@ -160,9 +160,9 @@ trait HasInstallPrompts
 
     protected function promptCssFramework(): string|false
     {
-        $css = $this->option('css');
+        $css = $this->suppliedOption('css');
 
-        if ($css) {
+        if ($css !== null) {
             if (!IpCapture::isValidCssFramework($css)) {
                 $this->error("Invalid CSS framework: {$css}. Use: ".implode(', ', IpCapture::CSS_FRAMEWORKS));
 
@@ -185,9 +185,9 @@ trait HasInstallPrompts
 
     protected function promptFrontendFramework(): string|false
     {
-        $frontend = $this->option('frontend');
+        $frontend = $this->suppliedOption('frontend');
 
-        if ($frontend) {
+        if ($frontend !== null) {
             if (!IpCapture::isValidFrontend($frontend)) {
                 $this->error("Invalid frontend: {$frontend}. Use: ".implode(', ', IpCapture::FRONTENDS));
 

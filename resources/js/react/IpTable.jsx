@@ -1,5 +1,6 @@
 const themes = {
     tailwind: {
+        wrap: 'overflow-x-auto',
         caption: 'sr-only',
         card: 'overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900',
         header: 'border-b border-gray-200 px-4 py-3 dark:border-gray-700',
@@ -12,6 +13,7 @@ const themes = {
         empty: 'text-gray-400 dark:text-gray-500',
     },
     bootstrap5: {
+        wrap: 'table-responsive',
         caption: 'visually-hidden',
         card: 'card',
         header: 'card-header',
@@ -24,6 +26,7 @@ const themes = {
         empty: 'text-secondary',
     },
     bootstrap4: {
+        wrap: 'table-responsive',
         caption: 'sr-only',
         card: 'card',
         header: 'card-header',
@@ -53,7 +56,7 @@ export default function IpTable({
                 <h3 className={css.title}>{title}</h3>
             </div>
 
-            <div className="table-responsive">
+            <div className={css.wrap}>
                 <table className={css.table}>
                     <caption className={css.caption}>{title}</caption>
                     <thead>

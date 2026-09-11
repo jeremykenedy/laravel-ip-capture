@@ -23,6 +23,19 @@ trait HandlesFrameworkSetup
     }
 
     /**
+     * An option the caller actually supplied.
+     *
+     * Truthiness is not enough: a value of "0" is invalid input to report, not
+     * an absent flag to fill in with a default.
+     */
+    protected function suppliedOption(string $name): ?string
+    {
+        $value = $this->option($name);
+
+        return is_string($value) && $value !== '' ? $value : null;
+    }
+
+    /**
      * Validate a CSS framework, reporting the supported values on failure.
      */
     protected function validateCssFramework(string $css): bool
@@ -77,7 +90,10 @@ trait HandlesFrameworkSetup
             $content = rtrim($content, "\n")."\n{$key}={$value}\n";
         }
 
-        file_put_contents($path, $content);
+        if (file_put_contents($path, $content) === false) {
+            $this->warn("  Could not write to .env, so {$key}={$value} was not persisted.");
+            $this->line('  Set it in config/ip-capture.php instead.');
+        }
     }
 
     protected function setCssFramework(string $css): void
