@@ -18,7 +18,7 @@ All notable changes to this package are documented here. The format follows
 - `display.mask` and `display.empty_label` for the shipped components.
 - Publish tags `ip-capture-views`, `ip-capture-views-tailwind`, `ip-capture-views-bootstrap5`, `ip-capture-views-bootstrap4`, `ip-capture-js` and `ip-capture-livewire`.
 - `Support\IpCapture` as the single resolution point for package configuration.
-- PHPStan at level 6, plus CI jobs for static analysis, coverage reporting, composer validation, dependency audit and frontend component checks.
+- PHPStan at level 6, plus CI jobs for static analysis, coverage with an 80 percent floor against a measured 83.4 percent, composer validation, dependency audit and frontend component checks.
 - Dependabot configuration for composer and GitHub Actions.
 
 ### Changed

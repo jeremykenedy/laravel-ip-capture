@@ -162,8 +162,10 @@ jobs:
           composer config allow-plugins.pestphp/pest-plugin true
           composer install --prefer-dist --no-interaction
 
+      # Floor sits under the measured figure so ordinary drift does not fail
+      # the build, while a real drop in covered code does.
       - name: Report coverage
-        run: ./vendor/bin/pest --coverage --ci
+        run: ./vendor/bin/pest --coverage --min=80 --ci
 
   frontend:
     runs-on: ubuntu-latest
