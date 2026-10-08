@@ -11,9 +11,6 @@ A Laravel package to automatically capture and track IP addresses on Eloquent mo
 </p>
 
 <p align="center">
-    
-    
-    
 <a href="https://packagist.org/packages/jeremykenedy/laravel-ip-capture"><img src="https://poser.pugx.org/jeremykenedy/laravel-ip-capture/d/total.svg" alt="Total Downloads"></a>
 <a href="https://packagist.org/packages/jeremykenedy/laravel-ip-capture"><img src="https://poser.pugx.org/jeremykenedy/laravel-ip-capture/v/stable.svg" alt="Latest Stable Version"></a>
 <a href="https://github.com/jeremykenedy/laravel-ip-capture/actions/workflows/tests.yml"><img src="https://github.com/jeremykenedy/laravel-ip-capture/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
